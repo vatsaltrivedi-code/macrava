@@ -11,7 +11,7 @@ function build(cfg) {
 }
 
 function makeStore() {
-  return { rows: new Map(), offline: false, delay: 0, calls: [], accounts: new Map(), pro: new Map(), usage: [], pwError: null, needsConfirm: false,
+  return { rows: new Map(), offline: false, delay: 0, calls: [], accounts: new Map(), pro: new Map(), usage: [], food: [], pwError: null, needsConfirm: false,
     async signIn(page, user) { await page.evaluate((u) => window.__fakeSignIn(u), user); } };
 }
 
@@ -41,6 +41,7 @@ async function newDevice(browser, store, opts = {}) {
       return { user: acc.user };
     }
     if (op === 'signOut') return null;
+    if (op === 'food') { if (store.offline) throw new Error('Failed to fetch'); store.food.push(arg); return null; }
     if (op === 'usage') { if (store.offline) throw new Error('Failed to fetch'); store.usage.push(arg); return null; }
     if (op === 'proInterest') { if (store.offline) throw new Error('Failed to fetch'); store.pro.set(arg.device, arg); return null; }
     if (store.offline) throw new Error('Failed to fetch');
@@ -62,6 +63,7 @@ async function newDevice(browser, store, opts = {}) {
       onChange(fn) { listeners.push(fn); const u = me(); if (u) setTimeout(() => fn(u), 0); },
       async google() { window.__fakeCalls.push('google'); },
       async password(a) { window.__fakeCalls.push((a.create ? 'signup:' : 'login:') + a.email); const r = await window.__cloudCall('password', null, a); if (r && r.user) window.__fakeSignIn(r.user); return r; },
+      async food(device, event, id, name) { return window.__cloudCall('food', null, { device, event, id, name }); },
       async usage(device, event) { return window.__cloudCall('usage', null, { device, event }); },
       async proInterest(device, answer, feature, price) { window.__fakeCalls.push('pro:' + answer + ':' + feature + ':' + price); return window.__cloudCall('proInterest', null, { device, answer, feature, price }); },
       async signOut() { window.__fakeCalls.push('signOut'); localStorage.removeItem(KEY); listeners.forEach(f => setTimeout(() => f(null), 0)); },
