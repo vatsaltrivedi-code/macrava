@@ -58,6 +58,15 @@ chk "usage: anon cannot read events" "$(as anon '' "select count(*) from public.
 chk "usage: anon cannot read daily view" "$(as anon '' "select * from public.usage_daily;")" "permission denied"
 chk "usage: user cannot read totals view" "$(as authenticated $A "select * from public.usage_totals;")" "permission denied"
 eq "usage: daily view counts" "$(echo "select visitors||','||made_a_plan from public.usage_daily;" | Q)" "1,1"
+# Food preferences: through the function only, once per device/day/event/food, unreadable from the app
+as anon '' "select public.record_food('$U1','ate',12,'Eggs'); select public.record_food('$U1','ate',12,'Eggs'); select public.record_food('$U1','swap_out',7,'Paneer');" >/dev/null
+eq "food: duplicates in a day ignored" "$(echo "select count(*) from public.food_events;" | Q)" "2"
+chk "food: bad event refused" "$(as anon '' "select public.record_food('$U1','hack',1,'x');")" "at RAISE"
+chk "food: overlong name refused" "$(as anon '' "select public.record_food('$U1','ate',1,repeat('x',200));")" "at RAISE"
+chk "food: anon cannot read events" "$(as anon '' "select count(*) from public.food_events;")" "permission denied"
+chk "food: anon cannot insert directly" "$(as anon '' "insert into public.food_events values ('$U1',current_date,'ate',1,'x');")" "permission denied"
+chk "food: user cannot read popularity" "$(as authenticated $A "select * from public.food_popularity;")" "permission denied"
+eq "food: popularity view" "$(echo "select food||':'||people_ate||':'||people_swapped_out from public.food_popularity order by food_id;" | Q | tr '\n' ' ')" "Paneer:0:1 Eggs:1:0 "
 # delete_my_account(): only the caller's account goes, everyone else's stays
 chk "anon cannot delete accounts" "$(as anon '' "select public.delete_my_account();")" "permission denied"
 as authenticated $B "select public.delete_my_account();" >/dev/null
