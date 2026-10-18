@@ -454,7 +454,7 @@ __PLAN__
   function makeCloud(cfg) {
     if (!cfg.url || !cfg.key || typeof supabase === "undefined" || !supabase.createClient) {
       return { enabled: false, session: async () => null, onChange() {}, google: async () => {},
-        password: async () => ({ error: "Login isn't set up yet." }), proInterest: async () => {}, usage: async () => {}, signOut: async () => {}, load: async () => null, save: async () => {},
+        password: async () => ({ error: "Login isn't set up yet." }), proInterest: async () => {}, usage: async () => {}, food: async () => {}, signOut: async () => {}, load: async () => null, save: async () => {},
         deleteAccount: async () => { throw new Error("Login isn't set up yet."); } };
     }
     const sb = supabase.createClient(cfg.url, cfg.key, { auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
@@ -522,6 +522,11 @@ __PLAN__
       // Anonymous usage count (device ID + event; the server adds the day)
       async usage(device, event) {
         const { error } = await limit(sb.rpc("record_usage", { p_device: device, p_event: event }), 10000);
+        if (error) throw error;
+      },
+      // Food preference (ate / swapped out / swapped in): device ID + food; the server adds the day
+      async food(device, event, id, name) {
+        const { error } = await limit(sb.rpc("record_food", { p_device: device, p_event: event, p_food_id: id, p_food_name: String(name).slice(0, 120) }), 10000);
         if (error) throw error;
       },
       // "Pro – coming soon" answer: one per device, through a database function (the table itself is closed)
@@ -1398,16 +1403,20 @@ __PLAN__
   };
   const PRO_HEAD = { week: "Every day of the week is part of Pro", shop: "The weekly shopping list is part of Pro", eatout: "Restaurant orders are part of Pro" };
   // Launch metrics: each event is sent at most once a day per device, with no plan data
-  function track(event) {
+  function onceToday(key, send) {
     const day = localDay(); let seen = {};
     try { seen = JSON.parse(ls("mbp_seen") || "{}"); } catch (e) {}
     if (seen.d !== day) seen = { d: day, e: [] };
-    if (!Array.isArray(seen.e) || seen.e.includes(event)) return;
-    seen.e.push(event); lsSet("mbp_seen", JSON.stringify(seen));
-    cloud.usage(deviceId(), event).catch(() => {   // offline: try again next time
-      try { const s2 = JSON.parse(ls("mbp_seen") || "{}"); if (s2.d === day) { s2.e = (s2.e || []).filter(x => x !== event); lsSet("mbp_seen", JSON.stringify(s2)); } } catch (e) {}
+    if (!Array.isArray(seen.e) || seen.e.includes(key)) return;
+    seen.e.push(key); lsSet("mbp_seen", JSON.stringify(seen));
+    send().catch(() => {   // offline: try again next time
+      try { const s2 = JSON.parse(ls("mbp_seen") || "{}"); if (s2.d === day) { s2.e = (s2.e || []).filter(x => x !== key); lsSet("mbp_seen", JSON.stringify(s2)); } } catch (e) {}
     });
   }
+  const track = (event) => onceToday(event, () => cloud.usage(deviceId(), event));
+  // Food preferences: which foods get eaten, swapped out and swapped in (food ID + name only)
+  const trackFood = (event, f) => { if (f && Number.isInteger(f.id) && f.name) onceToday(`${event}:${f.id}`, () => cloud.food(deviceId(), event, f.id, f.name)); };
+  let swapBefore = null;   // today's foods just before a swap, to see what the new plan brings in
   function proCard(feature) {
     track("pro");
     return `<div class="pro-card"><div class="pro-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/><path d="M19 15.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" opacity=".75"/></svg></div>
@@ -1432,6 +1441,8 @@ __PLAN__
     const planFor = (i) => (parity + i) % 2 === 0 ? W.A : W.B;
     const p = W.ok ? planFor(0) : W.A;
     track("plan");
+    const before = swapBefore; swapBefore = null;
+    if (before && W.ok) p.items.forEach(it => { if (!before.has(it.food.id)) trackFood("swap_in", it.food); });
     if (!W.ok) {
       screen.innerHTML = `<section class="result"><h1>No plan fits.</h1>
         <p class="q-sub" style="margin:0">Try a lower protein target, or say you can cook to unlock more foods.</p>
@@ -1663,11 +1674,17 @@ __PLAN__
       wirePriceEdit(drawDay);
       panel.querySelectorAll("[data-ate]").forEach(b => b.addEventListener("click", () => {
         const k = b.dataset.ate, list = S.ate[today];
-        if (!list.includes(k)) track("tick");
+        if (!list.includes(k)) {
+          track("tick");
+          const m = /^[A-Za-z]+:(\d+)$/.exec(k), it = m && dp.items.find(x => x.food.id === +m[1]);
+          if (it) trackFood("ate", it.food);
+        }
         const i = list.indexOf(k); if (i >= 0) list.splice(i, 1); else list.push(k);
         save(); drawDay();
       }));
       panel.querySelectorAll(".swap[data-id]").forEach(b => b.addEventListener("click", () => {
+        const it = dp.items.find(x => x.food.id === +b.dataset.id);
+        if (it) { trackFood("swap_out", it.food); swapBefore = new Set(p.items.map(x => x.food.id)); }
         S.exclude.push(+b.dataset.id); save(); result();
       }));
       panel.querySelectorAll("[data-unpick]").forEach(b => b.addEventListener("click", () => {
