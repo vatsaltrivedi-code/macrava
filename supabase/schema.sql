@@ -143,3 +143,47 @@ create or replace view public.usage_totals with (security_invoker = true) as
   from public.usage_events;
 
 revoke all on public.usage_daily, public.usage_totals from anon, authenticated;
+
+-- Food preferences: which foods people eat (tick) and swap out / swap in. Anonymous, like usage_events:
+-- a random device ID, the day, the event and the food. Counted once per device, day, event and food.
+create table if not exists public.food_events (
+  device uuid not null,
+  day date not null,
+  event text not null check (event in ('ate', 'swap_out', 'swap_in')),
+  food_id int not null check (food_id between 0 and 100000),
+  food_name text not null check (char_length(food_name) between 1 and 120),
+  primary key (device, day, event, food_id)
+);
+alter table public.food_events enable row level security;
+revoke all on public.food_events from anon, authenticated;
+
+create or replace function public.record_food(p_device uuid, p_event text, p_food_id int, p_food_name text) returns void
+language plpgsql security definer set search_path = '' as $$
+begin
+  if p_device is null or p_event not in ('ate', 'swap_out', 'swap_in') or p_food_id is null
+     or p_food_id < 0 or p_food_id > 100000 or p_food_name is null or char_length(p_food_name) not between 1 and 120 then
+    raise exception 'bad input';
+  end if;
+  -- A cap so a script can't fill the table
+  if (select count(*) from public.food_events) >= 500000 then
+    return;
+  end if;
+  insert into public.food_events (device, day, event, food_id, food_name)
+  values (p_device, (now() at time zone 'Asia/Kolkata')::date, p_event, p_food_id, p_food_name)
+  on conflict do nothing;
+end $$;
+
+revoke all on function public.record_food(uuid, text, int, text) from public;
+grant execute on function public.record_food(uuid, text, int, text) to anon, authenticated;
+
+-- Read in Supabase → Table Editor: one row per food, most eaten first. Counts are devices, not taps.
+create or replace view public.food_popularity with (security_invoker = true) as
+  select food_id, max(food_name) as food,
+         count(distinct device) filter (where event = 'ate') as people_ate,
+         count(distinct device) filter (where event = 'swap_in') as people_swapped_in,
+         count(distinct device) filter (where event = 'swap_out') as people_swapped_out,
+         max(day) as last_seen
+  from public.food_events group by food_id
+  order by people_ate desc, people_swapped_in desc, people_swapped_out asc;
+
+revoke all on public.food_popularity from anon, authenticated;
