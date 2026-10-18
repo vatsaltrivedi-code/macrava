@@ -1,5 +1,5 @@
 # Builds the app and publishes it to Cloudflare Pages (project "macro-budget") on every push to main.
-# Needs two repository secrets: CLOUDFLARE_API_TOKEN (Pages: Edit only) and CLOUDFLARE_ACCOUNT_ID.
+# Needs two repository secrets: CLOUDFLARE_APITOKEN (Pages: Edit only) and CLOUDFLARE_ACCOUNT_ID.
 name: Deploy to Cloudflare Pages
 on:
   push:
@@ -29,6 +29,6 @@ jobs:
       - name: Publish
         uses: cloudflare/wrangler-action@v3
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          apiToken: ${{ secrets.CLOUDFLARE_APITOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy site --project-name=macro-budget --branch=main --commit-dirty=true
