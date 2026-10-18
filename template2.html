@@ -1,0 +1,1928 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Macro Budget Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column. Four one-tap questions, then a single result screen with live controls. */
+:root {
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --ink: #121212;
+  --muted: #74746f;
+  --hair: #e8e7e3;
+  --accent: #e8590c;       /* protein orange, the only colour on the page */
+  --accent-soft: #fdeee4;
+  --on-accent: #ffffff;
+  --warn: #9a5b00;
+  --danger: #c2361b; --danger-soft: #fdecea;
+  --font: "Geist", "Segoe UI", system-ui, sans-serif;
+  --mono: "Geist Mono", ui-monospace, Menlo, monospace;
+  /* "Continue with Google": Google's dark button on a light page, light button on a dark page */
+  --g-bg: #131314; --g-ink: #e3e3e3; --g-line: #8e918f;
+  --g2-bg: #ffffff; --g2-ink: #1f1f1f; --g2-line: #747775;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e0e0d; --surface: #181817; --ink: #f2f2ef; --muted: #9a9a94; --hair: #2a2a28;
+    --accent: #ff7a33; --accent-soft: #33200f; --on-accent: #140a03; --warn: #f2b45c; --danger: #ff7b6b; --danger-soft: #3a1612; color-scheme: dark;
+    --g-bg: #ffffff; --g-ink: #1f1f1f; --g-line: #747775; --g2-bg: #131314; --g2-ink: #e3e3e3; --g2-line: #8e918f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e0e0d; --surface: #181817; --ink: #f2f2ef; --muted: #9a9a94; --hair: #2a2a28;
+  --accent: #ff7a33; --accent-soft: #33200f; --on-accent: #140a03; --warn: #f2b45c; --danger: #ff7b6b; --danger-soft: #3a1612; color-scheme: dark;
+  --g-bg: #ffffff; --g-ink: #1f1f1f; --g-line: #747775; --g2-bg: #131314; --g2-ink: #e3e3e3; --g2-line: #8e918f;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+button { font: inherit; color: inherit; }
+.app { max-width: 520px; margin: 0 auto; padding-inline: 20px; padding-block: 20px 48px; min-height: 100%; display: flex; flex-direction: column; }
+
+/* Top bar */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 40px; }
+.brand { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; }
+.brand b { color: var(--accent); font-weight: 600; }
+.dots { display: flex; gap: 6px; }
+.bar-r { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.theme-btn { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none;
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--hair); transition: border-color .15s, transform .2s; }
+.theme-btn:hover { border-color: var(--ink); }
+.theme-btn:active { transform: rotate(-20deg) scale(.94); }
+.theme-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.theme-btn svg { width: 16px; height: 16px; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--hair); transition: background .2s, width .2s; }
+.dots i.on { background: var(--ink); width: 18px; border-radius: 3px; }
+.back { background: none; border: 0; color: var(--muted); font-size: 14px; cursor: pointer; padding: 8px 0; }
+.back:hover { color: var(--ink); }
+
+/* Question steps */
+.step { flex: 1; display: flex; flex-direction: column; gap: 28px; padding-top: 8vh; animation: in .28s ease both; }
+@keyframes in { from { opacity: .001; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+h1 { font-size: clamp(28px, 7vw, 36px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 600; margin: 0; text-wrap: balance; }
+.q-sub { color: var(--muted); margin: -16px 0 0; font-size: 15px; }
+.options { display: grid; gap: 10px; }
+.opt { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 16px; padding: 18px 20px; cursor: pointer; transition: border-color .15s, transform .1s; }
+.opt:hover { border-color: var(--ink); }
+.opt:active { transform: scale(.99); }
+.opt[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.opt .t { font-weight: 600; font-size: 17px; }
+.opt .d { color: var(--muted); font-size: 14px; margin-top: 2px; }
+.opt .tick { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--hair); flex: none; display: grid; place-items: center; }
+.opt[aria-pressed="true"] .tick { background: var(--accent); border-color: var(--accent); }
+.opt[aria-pressed="true"] .tick::after { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--on-accent); }
+.row-label { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.pills { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill { background: var(--surface); border: 1.5px solid var(--hair); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 500; font-size: 15px; }
+.pill[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* Big number steppers and sliders */
+.big { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 20px; padding: 14px; }
+.big .val { font-size: 44px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; text-align: center; flex: 1; }
+.big .val small { font-size: 16px; color: var(--muted); font-weight: 500; margin-left: 4px; letter-spacing: 0; }
+.round { width: 52px; height: 52px; border-radius: 50%; border: 1.5px solid var(--hair); background: var(--bg); font-size: 24px; cursor: pointer; flex: none; line-height: 1; }
+.round:hover { border-color: var(--ink); }
+.budget-val { font-size: 64px; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1; }
+.budget-val small { font-size: 18px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 28px; background: transparent; cursor: pointer; }
+input[type=range]::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: linear-gradient(to right, var(--accent) var(--fill, 50%), var(--hair) var(--fill, 50%)); }
+input[type=range]::-moz-range-track { height: 6px; border-radius: 3px; background: var(--hair); }
+input[type=range]::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--accent); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); margin-top: -10px; box-shadow: 0 1px 4px rgba(0,0,0,.15); }
+input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); }
+.scale { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-family: var(--mono); }
+.preview { font-size: 15px; color: var(--muted); min-height: 22px; }
+.preview b { color: var(--ink); font-weight: 600; }
+
+.cta { margin-top: auto; width: 100%; background: var(--ink); color: var(--bg); border: 0; border-radius: 16px; padding: 18px; font-size: 17px; font-weight: 600; cursor: pointer; transition: transform .1s, opacity .15s; }
+.cta:active { transform: scale(.99); }
+.cta:disabled { opacity: .3; cursor: default; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+/* Result screen */
+.result { display: flex; flex-direction: column; gap: 22px; padding-top: 16px; animation: in .3s ease both; }
+.r-side, .r-main, .r-more { display: contents; }
+/* Laptops and desktops: settings on the left, the plan on the right */
+@media (min-width: 1000px) {
+  .app:has(.r-main) { max-width: 1120px; padding-inline: 32px; }
+  .result { display: grid; grid-template-columns: minmax(360px, 420px) minmax(0, 1fr); grid-template-areas: "side main" "more main"; grid-template-rows: auto 1fr; column-gap: 40px; row-gap: 22px; align-items: start; }
+  .r-side, .r-main, .r-more { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+  .r-side { grid-area: side; }
+  .r-more { grid-area: more; }
+  .r-main { grid-area: main; }
+}
+.hero { display: grid; grid-template-columns: 132px 1fr; gap: 20px; align-items: center; }
+.ring { position: relative; width: 132px; height: 132px; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring .track { fill: none; stroke: var(--hair); stroke-width: 10; }
+.ring .prog { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset .5s ease; }
+.ring .mid { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+.ring .mid b { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.ring .mid span { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.hero h2 { font-size: 15px; font-weight: 500; color: var(--muted); margin: 0 0 4px; }
+.cost { font-size: 40px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; font-variant-numeric: tabular-nums; }
+.cost small { font-size: 15px; font-weight: 500; color: var(--muted); letter-spacing: 0; }
+.stats { display: flex; gap: 14px; margin-top: 10px; font-size: 14px; color: var(--muted); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.stats b { color: var(--ink); font-weight: 600; }
+.week-note { margin: 12px 0 4px; }
+.bio { display: grid; gap: 10px; }
+.preview .why { display: block; font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+.est { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .02em; color: var(--muted); border: 1px solid var(--hair); border-radius: 6px; padding: 0 4px; line-height: 15px; vertical-align: 1px; cursor: help; }
+.est-line { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 520px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 13.5px; line-height: 1.45; padding: 12px 14px; border-radius: 12px; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.adj { font-size: 13px; padding: 6px 0 0; }
+.days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 4px; scrollbar-width: none; }
+.dchip { position: relative; flex: none; border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 7px 12px; font: 500 13px var(--font); cursor: pointer; }
+.dchip[aria-checked="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.dchip.locked { color: var(--muted); border-style: dashed; }
+.dchip.locked[aria-checked="true"] { background: var(--surface); color: var(--ink); border-color: var(--ink); border-style: solid; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pro-badge { display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 10.5px; font-weight: 700; letter-spacing: .02em; vertical-align: 1px; }
+.pro-card { position: relative; overflow: hidden; margin: 14px 0 6px; padding: 30px 20px 28px; border-radius: 22px; text-align: center;
+  background: radial-gradient(120% 90% at 50% 0%, var(--accent-soft) 0%, var(--surface) 70%); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 35%, var(--hair)); display: grid; justify-items: center; gap: 14px; }
+.pro-card::before, .pro-card::after { content: ""; position: absolute; border-radius: 50%; background: var(--accent); opacity: .08; pointer-events: none; }
+.pro-card::before { width: 180px; height: 180px; top: -90px; right: -60px; }
+.pro-card::after { width: 120px; height: 120px; bottom: -70px; left: -40px; }
+.pro-icon { width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 40%, transparent); }
+.pro-icon svg { width: 28px; height: 28px; animation: twinkle 2.4s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { transform: scale(1) rotate(0); } 50% { transform: scale(1.12) rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) { .pro-icon svg { animation: none; } }
+.pro-card h3 { margin: 0; font-size: 24px; line-height: 1.2; letter-spacing: -0.02em; font-weight: 700; }
+.pro-card h3 span { color: var(--accent); }
+.store-name { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.pe { background: none; border: 0; padding: 0; font: inherit; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.tick-sp { width: 24px; flex: none; }
+ul.shop .sp { background: none; border: 0; color: var(--ink); font: 600 15px var(--font); cursor: pointer; text-align: right; padding: 4px 0 4px 8px; display: grid; justify-items: end; }
+ul.shop .sp i { font-style: normal; font-weight: 500; font-size: 11px; color: var(--accent); }
+ul.shop .sn small.mine { color: var(--accent); }
+ul.shop li.pedit, ul.foods li.pedit { display: block; cursor: default; background: var(--surface); padding: 12px; border-radius: 12px; }
+ul.foods li.pedit { margin: 4px 0 10px; border: 0; }
+ul.shop li.pedit label, ul.foods li.pedit label { font-size: 14px; }
+ul.shop li.pedit input, ul.foods li.pedit input { width: 100px; font: 600 16px var(--font); padding: 6px 8px; border: 1.5px solid var(--hair); border-radius: 8px; background: var(--bg); color: var(--ink); }
+.split { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: 13px; color: var(--muted); margin-top: 6px; }
+.split b { color: var(--ink); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+details.foot summary { cursor: pointer; font-size: 13px; color: var(--muted); padding: 6px 0; }
+details.foot[open] summary { margin-bottom: 6px; }
+.backup { display: grid; gap: 8px; }
+.backup textarea { width: 100%; box-sizing: border-box; font: 12px var(--mono, monospace); padding: 8px; border: 1.5px solid var(--hair); border-radius: 10px; background: var(--surface); color: var(--ink); }
+#bkBox { display: grid; gap: 8px; }
+#bkBox[hidden] { display: none; }
+.how { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+.how::before { content: "→ "; }
+.how.warn { color: var(--warn); }
+.fresh { font-weight: 600; color: var(--warn); }
+.hostel { display: grid; gap: 4px; }
+.room { display: grid; gap: 8px; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 20px; padding: 14px 18px; }
+.room .tune-head span:last-child { font-size: 12.5px; text-align: right; }
+.note .fix { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.btn-sm.ghosty { background: transparent; color: var(--ink); border: 1.5px solid var(--hair); }
+.tune-head.sub { margin-top: 12px; }
+.stp.auto .stp-v input::placeholder { color: var(--muted); opacity: 1; }
+.stp.auto .stp-v span { font-size: 13px; }
+.note { font-size: 14px; color: var(--warn); background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; }
+
+.tune { display: grid; gap: 14px; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 20px; padding: 16px 18px; }
+.tune-row { display: grid; gap: 6px; }
+.tune-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; color: var(--muted); }
+.tune-head b { color: var(--ink); font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { background: transparent; border: 1.5px solid var(--hair); border-radius: 999px; padding: 6px 12px; font-size: 13px; cursor: pointer; color: var(--muted); }
+.chip:hover { color: var(--ink); border-color: var(--ink); }
+
+.tabs { display: grid; grid-template-columns: 1fr 1fr 1fr; background: var(--hair); padding: 4px; border-radius: 12px; }
+.tabs button { border: 0; background: transparent; padding: 10px; border-radius: 9px; font-weight: 500; font-size: 15px; cursor: pointer; color: var(--muted); }
+.tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+
+ul.foods { list-style: none; margin: 0; padding: 0; }
+ul.foods li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--hair); animation: in .25s ease both; }
+.qty { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.qty small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); letter-spacing: 0; }
+.fname { min-width: 0; }
+.fname .n { font-weight: 500; font-size: 15px; line-height: 1.3; }
+.fname .m { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.fname .m .p { color: var(--accent); font-weight: 600; }
+.swap { background: none; border: 1.5px solid var(--hair); border-radius: 999px; padding: 7px 12px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.swap:hover { color: var(--ink); border-color: var(--ink); }
+li.mess .qty { color: var(--muted); }
+.undo { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); padding-top: 10px; }
+.link { background: none; border: 0; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; font-size: 14px; }
+
+.welcome { padding-top: 10vh; }
+.w-mark { width: 56px; height: 56px; border-radius: 16px; background: var(--accent); display: grid; place-items: center; }
+.w-mark span { width: 24px; height: 24px; border-radius: 50%; border: 4px solid var(--on-accent); border-right-color: transparent; transform: rotate(-45deg); }
+.welcome h1 { font-size: clamp(34px, 9vw, 44px); }
+.welcome .q-sub { margin-top: -12px; }
+.auth-btns { margin-top: auto; display: grid; gap: 10px; }
+.auth-btns .ghost { margin-top: 0; }
+.link.guest { color: var(--muted); font-weight: 500; justify-self: center; padding: 10px; }
+/* Account actions: one compact row of small outlined pills */
+.acct { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: -8px; }
+.acct button { display: inline-flex; align-items: center; gap: 7px; font: 500 14px var(--font); padding: 8px 14px; border-radius: 999px;
+  background: var(--surface); color: var(--ink); border: 1.5px solid var(--hair); cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+.acct button svg { width: 15px; height: 15px; flex: none; }
+.acct button:hover { border-color: var(--ink); }
+.acct .danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 35%, var(--hair)); }
+.acct .danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+.acct button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+form.auth { display: grid; gap: 14px; }
+.fld { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
+.fld input { font: 500 17px var(--font); padding: 15px 16px; border: 1.5px solid var(--hair); border-radius: 14px; background: var(--surface); color: var(--ink); }
+.fld input:focus { border-color: var(--ink); outline: none; }
+.err { color: var(--warn); font-size: 14px; margin: 0; min-height: 20px; }
+.ok-msg { color: var(--ink); font-size: 14px; margin: 0; }
+.pw-row { display: flex; gap: 8px; align-items: stretch; }
+.pw-row input { flex: 1; min-width: 0; width: 100%; }
+form.auth, .fld { min-width: 0; }
+.fine-note a { color: inherit; }
+.pw-show { flex: none; padding: 0 14px; border-radius: 14px; border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); font: 600 14px var(--font); cursor: pointer; }
+.sync-note { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--ink); color: var(--surface); font-size: 13px; padding: 8px 14px; border-radius: 999px; z-index: 50; text-align: center; }
+.sync-note[hidden] { display: none; }
+.swap-auth { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
+.fine-note { text-align: center; color: var(--muted); font-size: 12.5px; margin: 0; }
+.legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.legal a:hover { color: var(--ink); }
+.targets { display: grid; gap: 8px; }
+#stps, .stps2 { display: grid; gap: 8px; }
+.stp { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 16px; padding: 8px; }
+.tune .stp { background: var(--bg); }
+.round.sm { width: 40px; height: 40px; font-size: 20px; }
+.stp-v { flex: 1; display: flex; align-items: baseline; justify-content: center; gap: 6px; cursor: text; }
+.stp-v input { width: 4.2ch; min-width: 0; border: 0; background: transparent; color: var(--ink); font: 600 24px var(--font); letter-spacing: -0.02em; text-align: right; font-variant-numeric: tabular-nums; -moz-appearance: textfield; padding: 0; }
+.stp-v input::-webkit-outer-spin-button, .stp-v input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.stp-v input:focus { outline: none; border-bottom: 2px solid var(--accent); }
+.stp-v span { color: var(--muted); font-size: 14px; }
+/* keep the tune box inside narrow phones */
+.tune > *, .tune-row, #tgts, .seg3 > *, #stps > .stp, .stps2 > .stp { min-width: 0; }
+.seg3 button span { overflow-wrap: anywhere; }
+/* compact: two steppers side by side, number above its unit */
+#stps, .stps2 { grid-template-columns: 1fr 1fr; }
+#stps .stp, .stps2 .stp { gap: 2px; padding: 5px; border-radius: 14px; }
+#stps .round.sm, .stps2 .round.sm { width: 30px; height: 30px; font-size: 17px; }
+#stps .stp-v, .stps2 .stp-v { flex-direction: column; align-items: center; gap: 0; min-width: 0; }
+#stps .stp-v input, .stps2 .stp-v input { width: 100%; font-size: 18px; text-align: center; }
+#stps .stp-v span, .stps2 .stp-v span { font-size: 11.5px; white-space: nowrap; line-height: 1.3; }
+.tune-head .link { font-size: 13px; }
+.src { display: inline-grid; grid-template-columns: 1fr 1fr; border: 1.5px solid var(--hair); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+.src button { border: 0; background: transparent; padding: 7px 14px; border-radius: 7px; font-weight: 500; font-size: 14px; color: var(--muted); cursor: pointer; }
+.src button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.grams { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.grams .pill { padding: 5px 10px; font-size: 12.5px; }
+.swap:disabled { opacity: .35; cursor: default; }
+.seg3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.seg3 button { background: var(--bg); border: 1.5px solid var(--hair); border-radius: 12px; padding: 9px 6px; cursor: pointer; display: grid; gap: 2px; text-align: center; }
+.seg3 button b { font-size: 14px; font-weight: 600; }
+.seg3 button span { font-size: 11.5px; color: var(--muted); }
+.seg3 button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+h3.meal span { float: right; text-transform: none; letter-spacing: 0; font-weight: 500; }
+h3.meal { font-size: 13px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 18px 0 2px; }
+ul.foods li:has(.tick-btn), ul.foods li:has(.tick-sp) { grid-template-columns: 28px 64px minmax(0, 1fr) auto; }
+.tick-btn { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--hair); background: transparent; cursor: pointer; padding: 0; display: grid; place-items: center; }
+.tick-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+.tick-btn[aria-pressed="true"]::after { content: ""; width: 9px; height: 5px; border: 2px solid var(--on-accent); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+li.ate .n { text-decoration: line-through; color: var(--muted); }
+.eaten { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: baseline; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 14px; padding: 12px 14px; }
+.eaten span { color: var(--muted); font-size: 14px; }
+.eaten b { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.eaten b small { font-size: 13px; color: var(--muted); font-weight: 500; }
+.eaten .bar { grid-column: 1 / -1; height: 6px; background: var(--hair); border-radius: 3px; overflow: hidden; }
+.eaten .bar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.hint-sm { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
+.people { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.loc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: var(--muted); }
+.loc b { color: var(--ink); font-weight: 600; }
+.loc-edit { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; }
+.loc-edit select, .loc-edit input, .fld select { font: 500 15px var(--font); padding: 10px 12px; border: 1.5px solid var(--hair); border-radius: 12px; background: var(--surface); color: var(--ink); min-width: 0; }
+.fld select { padding: 15px 14px; font-size: 17px; }
+.fld i { font-style: normal; color: var(--muted); }
+.loc-edit input { flex: 1; }
+.btn-sm { background: var(--ink); color: var(--bg); border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 600; cursor: pointer; }
+.loc-note { font-size: 13px; color: var(--muted); }
+.check-sm { display: flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); margin: 8px 0 4px; cursor: pointer; }
+.check-sm input { accent-color: var(--accent); }
+.rp { color: var(--ink); font-weight: 600; }
+.approx { font-size: 12px; color: var(--muted); }
+.out-lede { margin: 0 0 12px; font-size: 15px; color: var(--muted); }
+.pills.small .pill { padding: 7px 12px; font-size: 13px; }
+.sortrow { display: flex; gap: 14px; align-items: center; font-size: 13px; color: var(--muted); margin: 12px 0 2px; flex-wrap: wrap; }
+.sortrow .link { color: var(--muted); font-weight: 500; font-size: 13px; }
+.sortrow .link.on { color: var(--ink); font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+.find { font-size: 12.5px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+.find:hover { color: var(--ink); }
+.swap.add.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+li.out { background: var(--accent-soft); border-radius: 12px; padding-inline: 10px !important; border-bottom: 0 !important; margin: 6px 0; }
+.price { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; font-size: 13px; color: var(--muted); }
+.price input { width: 84px; font: 500 14px var(--font); padding: 5px 8px; border: 1.5px solid var(--hair); border-radius: 8px; background: var(--surface); color: var(--ink); }
+ul.shop { list-style: none; margin: 0; padding: 0; }
+ul.shop li { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--hair); cursor: pointer; }
+ul.shop li .box { width: 22px; height: 22px; border-radius: 7px; border: 1.5px solid var(--hair); flex: none; display: grid; place-items: center; }
+ul.shop li.done .box { background: var(--ink); border-color: var(--ink); }
+ul.shop li.done .box::after { content: ""; width: 10px; height: 6px; border: 2px solid var(--bg); border-top: 0; border-right: 0; transform: rotate(-45deg) translate(1px, -1px); }
+ul.shop li.done .sn { text-decoration: line-through; color: var(--muted); }
+ul.shop .sn { flex: 1; min-width: 0; font-size: 15px; }
+ul.shop .sn small { display: block; color: var(--muted); font-size: 13px; }
+ul.shop .sp { font-variant-numeric: tabular-nums; font-weight: 600; }
+.total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; font-size: 15px; color: var(--muted); }
+.total b { color: var(--ink); font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.ghost { width: 100%; background: transparent; border: 1.5px solid var(--hair); border-radius: 14px; padding: 14px; font-weight: 600; cursor: pointer; margin-top: 14px; }
+.ghost:hover { border-color: var(--ink); }
+.gbtn { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.gbtn img { width: 20px; height: 20px; flex: none; }
+.cta.gbtn { background: var(--g-bg); color: var(--g-ink); box-shadow: inset 0 0 0 1px var(--g-line); }
+.ghost.gbtn { background: var(--g2-bg); color: var(--g2-ink); border-color: var(--g2-line); }
+.foot { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.foot p { margin: 0 0 6px; }
+@media (max-width: 400px) {
+  .hero { grid-template-columns: 112px 1fr; gap: 16px; }
+  .ring { width: 112px; height: 112px; }
+  .ring .mid b { font-size: 23px; }
+  .cost { font-size: 34px; }
+  ul.foods li { grid-template-columns: 64px minmax(0, 1fr) auto; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+<script>/* the chosen theme, before anything draws (no flash of the wrong colours) */
+try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+
+<div class="app">
+  <div class="bar">
+    <button type="button" class="back" id="back" hidden>← Back</button>
+    <span class="brand" id="brand">Macro <b>Budget</b></span>
+    <div class="bar-r">
+      <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <button type="button" class="theme-btn" id="themeBtn" aria-label="Switch to dark mode"></button>
+    </div>
+  </div>
+  <main id="screen"></main>
+</div>
+
+<script id="foods" type="application/json">__FOODS__</script>
+<script id="rest" type="application/json">__REST__</script>
+<script>/* javascript-lp-solver 0.4.24 (MIT), bundled so no outside script runs */
+__SOLVER__
+</script>
+<script>/* @supabase/supabase-js 2.117.3 (MIT), bundled */
+__SUPABASE__
+</script>
+<script>
+__PLAN__
+</script>
+<script>
+(function () {
+  // Supabase project (public URL + publishable key). Empty = guest-only build.
+  const CONFIG = { url: __SUPA_URL__, key: __SUPA_KEY__ };
+  const FOODS = JSON.parse(document.getElementById("foods").textContent);
+  const REST = JSON.parse(document.getElementById("rest").textContent);
+  FOODS.forEach((f, i) => { f.id = i; }); REST.forEach((r, i) => { r.id = i; });
+  normalizeUnits(FOODS);   // whole cups and bottles for single-serve packs
+  const PRICE_DATE = "3 Oct 2026";
+  // A stable key per product, used to remember the person's own prices across data updates
+  for (const f of FOODS) f.key = f.link || (f.name + "|" + f.pack);
+  // Sattu is roasted chana flour: it's drunk, not cooked, and "atta" makes it sound like roti flour
+  for (const f of FOODS) if (/sattu/i.test(f.name)) f.name = f.name.replace(/\s*(atta\s+)?sattu(\s+atta)?/i, " Sattu").trim() + " (roasted chana, mix & drink)";
+  const $ = (s, el = document) => el.querySelector(s);
+  const fmt = (n, d = 0) => Number(n).toLocaleString("en-IN", { maximumFractionDigits: d, minimumFractionDigits: d });
+  const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // Answers. Saved in this browser only, so returning visitors land on their plan.
+  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false } };
+  const FOOD_BY_KEY = new Map(FOODS.map(f => [f.key, f]));
+  const CITY_LIST = ["Delhi NCR", "Bengaluru", "Mumbai", "Pune", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad",
+    "Jaipur", "Chandigarh", "Lucknow", "Indore", "Bhopal", "Dehradun", "Other"];
+  // A fresh copy, so pushing to S.exclude etc. never changes DEFAULTS
+  const fresh0 = () => JSON.parse(JSON.stringify(DEFAULTS));
+  // Saved data and backup codes are untrusted: keep only known fields, with the right types and ranges.
+  // Everything else is dropped, so a crafted code can't put HTML or script into the page.
+  function clean(raw) {
+    const o = fresh0();
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return o;
+    const own = (k) => Object.prototype.hasOwnProperty.call(raw, k);
+    const num = (k, lo, hi, nullable) => { if (!own(k)) return; const v = raw[k];
+      if (v === null && nullable) { o[k] = null; return; }
+      const n = Number(v); if (typeof v !== "boolean" && v !== "" && Number.isFinite(n)) o[k] = Math.min(hi, Math.max(lo, n)); };
+    const pick = (k, list) => { if (own(k) && list.includes(raw[k])) o[k] = raw[k]; };
+    const str = (k, max) => { if (own(k) && typeof raw[k] === "string") o[k] = raw[k].slice(0, max); };
+    const bool = (k) => { if (own(k) && typeof raw[k] === "boolean") o[k] = raw[k]; };
+    pick("diet", [null, "veg", "egg", "nonveg"]);
+    pick("kitchen", [null, true, false]);
+    pick("goal", ["muscle", "lose", "fit"]);
+    pick("style", ["cheap", "balanced", "tasty"]);
+    pick("place", [null, "home", "pg", "hostel"]);
+    pick("sex", [null, "male", "female"]);
+    pick("activity", ["sit", "light", "gym", "hard"]);
+    pick("city", [null].concat(CITY_LIST));
+    num("meals", 0, 3); o.meals = Math.round(o.meals);
+    num("weight", 35, 150); num("budget", 40, 500); num("people", 1, 4); o.people = Math.round(o.people);
+    num("age", 15, 70); num("height", 135, 210); num("step", -1, 4); o.step = Math.round(o.step);
+    o.updatedAt = 0; num("updatedAt", 0, 1e14); o.updatedAt = Math.round(o.updatedAt);
+    num("myP", 30, 300, true); num("myK", 1000, 5000, true); num("myC", 20, 700, true); num("myF", 10, 250, true);
+    str("name", 60); if (own("name") && raw.name === null) o.name = null;
+    str("area", 80); bool("pgKitchen"); bool("guest");
+    if (Array.isArray(raw.exclude)) o.exclude = raw.exclude.map(Number).filter(n => Number.isInteger(n) && n >= 0 && n < FOODS.length).slice(0, 500);
+    if (Array.isArray(raw.out)) o.out = raw.out.filter(x => x && typeof x.key === "string").slice(0, 50)
+      .map(x => {
+        const o2 = { key: x.key.slice(0, 200), price: Number.isFinite(Number(x.price)) && x.price !== null && x.price !== "" ? Math.min(20000, Math.max(0, Number(x.price))) : null };
+        const fr = typeof x.frac === "number" ? x.frac : NaN;   // pizza: share of the order you eat
+        if (Number.isFinite(fr) && fr > 0 && fr <= 1) o2.frac = fr;
+        return o2;
+      });
+    if (Array.isArray(raw.rte)) o.rte = raw.rte.filter(x => x && typeof x.link === "string").slice(0, 50)
+      .map(x => ({ link: x.link.slice(0, 300), g: Math.min(5000, Math.max(0, Number(x.g) || 0)) }));
+    if (raw.gear && typeof raw.gear === "object") for (const g of ["kettle", "microwave", "fridge"]) o.gear[g] = raw.gear[g] === true;
+    if (raw.myPrices && typeof raw.myPrices === "object") {
+      const m = Object.create(null);
+      for (const [k, v] of Object.entries(raw.myPrices).slice(0, 600)) {
+        const p = Number(v && v.p);
+        if (FOOD_BY_KEY.has(k) && Number.isFinite(p) && p > 0) m[k] = { p: Math.min(20000, p), d: typeof v.d === "string" ? v.d.slice(0, 12) : "" };
+      }
+      o.myPrices = Object.assign({}, m);
+    }
+    if (raw.ate && typeof raw.ate === "object") {
+      for (const [d, list] of Object.entries(raw.ate)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d) && Array.isArray(list)) o.ate[d] = list.filter(x => typeof x === "string" && x.length < 300).slice(0, 100);
+      }
+    }
+    return o;
+  }
+  // The only code that talks to Supabase. Tests replace it with window.__cloudMock.
+  function makeCloud(cfg) {
+    if (!cfg.url || !cfg.key || typeof supabase === "undefined" || !supabase.createClient) {
+      return { enabled: false, session: async () => null, onChange() {}, google: async () => {},
+        password: async () => ({ error: "Login isn't set up yet." }), proInterest: async () => {}, usage: async () => {}, signOut: async () => {}, load: async () => null, save: async () => {},
+        deleteAccount: async () => { throw new Error("Login isn't set up yet."); } };
+    }
+    const sb = supabase.createClient(cfg.url, cfg.key, { auth: { flowType: "pkce", detectSessionInUrl: true, persistSession: true, autoRefreshToken: true } });
+    const toUser = (u) => u ? { id: u.id, email: u.email || "", name: ((u.user_metadata || {}).full_name || (u.user_metadata || {}).name || "").slice(0, 60) } : null;
+    const back = () => location.origin + location.pathname;
+    const limit = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]);
+    let uid = null;
+    return {
+      enabled: true,
+      async session() {
+        // Expired token + no network: supabase retries the refresh for ~25 s. Don't make the person wait:
+        // it's still their device, so use the stored user and work offline until the network is back.
+        const stored = () => {
+          try { const raw = JSON.parse(localStorage.getItem(sb.auth.storageKey) || "null"); const su = raw && (raw.user || (raw.currentSession && raw.currentSession.user));
+            if (su && su.id) { const u = toUser(su); u.offline = true; return u; } } catch (e) {}
+          return null;
+        };
+        const r = await Promise.race([sb.auth.getSession().then(x => ({ x }), () => ({ x: { data: null, error: { name: "AuthRetryableFetchError" } } })),
+          new Promise(res => setTimeout(() => res({ late: true }), 3000))]);
+        let u = null;
+        if (r.late || !navigator.onLine) u = stored() || (r.x && toUser(r.x.data && r.x.data.session && r.x.data.session.user));
+        else {
+          u = toUser(r.x.data && r.x.data.session && r.x.data.session.user);
+          if (!u && r.x.error && supabase.isAuthRetryableFetchError && supabase.isAuthRetryableFetchError(r.x.error)) u = stored();
+        }
+        uid = u && u.id; return u;
+      },
+      // Supabase warns against awaiting inside this callback, so hand off on the next tick
+      onChange(fn) { sb.auth.onAuthStateChange((ev, s) => { const u = toUser(s && s.user); uid = u && u.id; setTimeout(() => fn(u), 0); }); },
+      async google() { const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: back() } }); if (error) throw error; },
+      // Email + password. With email confirmation off, sign-up signs the person straight in.
+      async password({ email, password, create }) {
+        const { data, error } = await limit(create
+          ? sb.auth.signUp({ email, password, options: { emailRedirectTo: back() } })
+          : sb.auth.signInWithPassword({ email, password }), 15000);
+        if (error) return { error: error.message || String(error) };
+        if (!data.session) return { needsConfirm: true };
+        const u = toUser(data.user); uid = u && u.id; return { user: u };
+      },
+      async signOut() {
+        uid = null;
+        // Online this revokes the session at Supabase; offline it would retry for ~25 s, so stop waiting after 1 s
+        await Promise.race([sb.auth.signOut({ scope: "local" }).catch(() => {}), new Promise(res => setTimeout(res, 1000))]);
+        // signOut skips clearing storage when the token can't refresh (offline); clear it ourselves
+        const sweep = () => { if (uid) return; try { const k = sb.auth.storageKey; [k, k + "-code-verifier", k + "-user"].forEach(x => localStorage.removeItem(x)); } catch (e) {} };
+        sweep();
+        // A token refresh already in flight can write the session back after this; sweep again a little later
+        setTimeout(sweep, 3000); setTimeout(sweep, 10000);
+      },
+      async load() {
+        if (!uid) await this.session();
+        if (!uid) return null;
+        const { data, error } = await limit(sb.from("profiles").select("name,city,area,state,updated_at").eq("id", uid).maybeSingle(), 10000);
+        if (error) throw error;
+        return data;
+      },
+      // Deletes the caller's sign-in and profile (database function delete_my_account), then signs out here
+      async deleteAccount() {
+        if (!uid) await this.session();
+        if (!uid) throw new Error("not signed in");
+        const { error } = await limit(sb.rpc("delete_my_account"), 10000);
+        if (error) throw error;
+        await this.signOut();
+      },
+      // Anonymous usage count (device ID + event; the server adds the day)
+      async usage(device, event) {
+        const { error } = await limit(sb.rpc("record_usage", { p_device: device, p_event: event }), 10000);
+        if (error) throw error;
+      },
+      // "Pro – coming soon" answer: one per device, through a database function (the table itself is closed)
+      async proInterest(device, answer, feature, price) {
+        const { error } = await limit(sb.rpc("record_pro_interest", { p_device: device, p_answer: answer, p_feature: feature, p_price: price }), 10000);
+        if (error) throw error;
+      },
+      async save(row) {
+        if (!uid) await this.session();
+        if (!uid) throw new Error("not signed in");
+        const { error } = await limit(sb.from("profiles").upsert(Object.assign({ id: uid }, row), { onConflict: "id" }), 10000);
+        if (error) throw error;
+      },
+    };
+  }
+  // Device copy vs account copy: the newer whole plan wins, but eaten-ticks and own prices from both are kept.
+  function mergeState(local, remote) {
+    const lt = local.updatedAt || 0, rt = remote.updatedAt || 0;
+    const base = lt >= rt ? local : remote, other = base === local ? remote : local;
+    const out = JSON.parse(JSON.stringify(base));
+    for (const [d, list] of Object.entries(other.ate || {})) {
+      const mine = out.ate[d] || [];
+      out.ate[d] = mine.concat(list.filter(x => !mine.includes(x)));
+    }
+    for (const [k, v] of Object.entries(other.myPrices || {})) {
+      const mine = out.myPrices[k];
+      if (!mine || (v.d || "") > (mine.d || "")) out.myPrices[k] = Object.assign({}, v);
+    }
+    out.updatedAt = Math.max(lt, rt);
+    return out;
+  }
+  // Three-way merge against the copy both sides last agreed on (base): a change made on only one side always wins,
+  // removals (unticks, deleted prices) are kept, and only a field changed on both sides falls back to newest-wins.
+  function threeWay(base, local, remote) {
+    const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+    const clone = (v) => v === undefined ? v : JSON.parse(JSON.stringify(v));
+    const localWins = (local.updatedAt || 0) >= (remote.updatedAt || 0);
+    const out = clone(local);
+    const skip = new Set(["step", "name", "guest", "updatedAt", "ate", "myPrices"]);
+    for (const k of new Set([...Object.keys(local), ...Object.keys(remote)])) {
+      if (skip.has(k)) continue;
+      const l = local[k], r = remote[k], b = base[k];
+      if (same(l, r) || same(r, b)) continue;          // agree, or only this device changed it
+      if (same(l, b) || !localWins) out[k] = clone(r); // only the account changed it, or both did and it's newer
+    }
+    out.ate = {};
+    const A0 = base.ate || {}, AL = local.ate || {}, AR = remote.ate || {};
+    for (const d of new Set([...Object.keys(AL), ...Object.keys(AR)])) {
+      const B = A0[d] || [], L = AL[d] || [], R = AR[d] || [];
+      const res = L.filter(x => !(B.includes(x) && !R.includes(x)));
+      for (const x of R) if (!B.includes(x) && !res.includes(x)) res.push(x);
+      out.ate[d] = res;
+    }
+    out.myPrices = {};
+    const P0 = base.myPrices || {}, PL = local.myPrices || {}, PR = remote.myPrices || {};
+    for (const k of new Set([...Object.keys(PL), ...Object.keys(PR)])) {
+      const l = PL[k], r = PR[k], b = P0[k];
+      let v;
+      if (same(l, r) || same(r, b)) v = l;
+      else if (same(l, b)) v = r;
+      else v = !l ? r : !r ? l : ((r.d || "") > (l.d || "") ? r : l);
+      if (v) out.myPrices[k] = clone(v);
+    }
+    out.updatedAt = Math.max(local.updatedAt || 0, remote.updatedAt || 0);
+    return out;
+  }
+  // What goes to the account: no login/screen fields, and only the last 14 days of ticks (keeps the row small)
+  function trimForUpload(st) {
+    const out = JSON.parse(JSON.stringify(st));
+    const d = new Date(); d.setDate(d.getDate() - 13);
+    const cut = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    out.ate = {};
+    for (const [k, v] of Object.entries(st.ate || {})) if (k >= cut) out.ate[k] = v;
+    out.name = null; out.guest = false; out.step = -1;
+    return out;
+  }
+  const cloud = window.__cloudMock || makeCloud(CONFIG);
+  const TESTING = !!(window.__cloudMock || window.__mbpTestHook);
+  if (TESTING) window.__mbpTest = { clean, cloud, mergeState, trimForUpload, foodKey: (i) => FOODS[i].key };
+  let S = fresh0();
+  try { const saved = JSON.parse(localStorage.getItem("mbp") || "null"); if (saved) S = clean(saved); } catch (e) {}
+  // Device first: every change is written here at once. When signed in, it also goes to the account 2 s later.
+  let currentUser = null, syncTimer = null, syncing = false, syncAgain = false, syncWaiting = false;
+  const sig = (st) => JSON.stringify(Object.assign({}, st, { step: 0, name: 0, guest: 0, updatedAt: 0 }));
+  let lastSig = null;
+  const persist = () => { try { localStorage.setItem("mbp", JSON.stringify(S)); } catch (e) {} };
+  const save = () => {
+    const now = sig(S);
+    if (lastSig !== null && now !== lastSig) S.updatedAt = Math.max(Date.now(), (S.updatedAt || 0) + 1);   // only real changes count as "newer"
+    lastSig = now;
+    persist();
+    if (currentUser) { clearTimeout(syncTimer); syncWaiting = true; syncTimer = setTimeout(syncNow, 2000); }
+  };
+
+  const GOALS = {
+    muscle: { t: "Build muscle", d: "Gain slowly, lots of protein", kf: 1.10 },
+    lose:   { t: "Lose fat", d: "Eat less, keep your muscle", kf: 0.80 },
+    fit:    { t: "Stay fit", d: "Maintain your weight", kf: 1.00 },
+  };
+  const ACTIVITY = {
+    sit:   { m: 1.2,   t: "Mostly sitting" },
+    light: { m: 1.375, t: "Light, 1–3 days" },
+    gym:   { m: 1.55,  t: "Gym 3–5 days" },
+    hard:  { m: 1.725, t: "Hard, 6–7 days" },
+  };
+  const MESS = { p: 15, kcal: 650, c: 95, f: 22 }; // a typical mess thali, roughly
+
+  // What we suggest. The person's own numbers (myP, myK...) always win.
+  //  Calories: Mifflin-St Jeor resting burn x activity, then -20% to lose fat, +10% to build muscle.
+  //  Protein: g per kg (2.0 losing fat, 1.8 building, 1.0-1.6 maintaining by activity), counted on the
+  //  weight at BMI 25 for people above it, so heavier bodies don't get inflated targets.
+  //  Fat: 25% of calories. Carbs: the rest.
+  function rec() {
+    const w = S.weight, h = S.height || 170, a = S.age || 19;
+    const sexAdj = S.sex === "female" ? -161 : S.sex === "male" ? 5 : -78;   // not picked: halfway
+    const bmr = 10 * w + 6.25 * h - 5 * a + sexAdj;
+    const act = (ACTIVITY[S.activity] || ACTIVITY.light).m;
+    const burn = bmr * act;
+    let kcal = burn * GOALS[S.goal].kf;
+    kcal = Math.max(kcal, bmr, S.sex === "female" ? 1200 : 1500);           // never below resting burn
+    const bmi = w / Math.pow(h / 100, 2);
+    const refW = bmi > 25 ? 25 * Math.pow(h / 100, 2) : w;
+    const pk = S.goal === "lose" ? 2.0 : S.goal === "muscle" ? 1.8 : act >= 1.55 ? 1.6 : act >= 1.375 ? 1.2 : 1.0;
+    const protein = Math.round(refW * pk);
+    kcal = Math.round(kcal / 10) * 10;
+    const fat = Math.round(kcal * 0.25 / 9);
+    const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
+    return { protein, kcal, fat, carbs, bmr, burn, act, pk, refW, bmi };
+  }
+  const LIMITS = { p: [30, 300, 5], k: [1000, 5000, 50], c: [20, 700, 5], f: [10, 250, 5], a: [15, 70, 1], h: [135, 210, 1] };
+  const UNIT = { p: "g protein", k: "kcal", c: "g carbs", f: "g fat", a: "years old", h: "cm tall" };
+  const BUMP = { p: 5, k: 100, c: 10, f: 5, a: 1, h: 1 };
+  const MYKEY = { p: "myP", k: "myK", c: "myC", f: "myF", a: "age", h: "height" };
+  // Carbs and fat are optional: val null = "auto" (the planner picks), shown greyed with the plan's amount.
+  function stepper(kind, val, autoVal) {
+    const [min, max, step] = LIMITS[kind];
+    const unit = UNIT[kind], auto = val == null;
+    return `<div class="stp${auto ? " auto" : ""}" data-kind="${kind}" data-auto="${autoVal ?? ""}">
+      <button type="button" class="round sm" data-d="-1" aria-label="Less ${unit}">−</button>
+      <label class="stp-v"><input type="number" inputmode="numeric" min="${min}" max="${max}" step="${step}" value="${auto ? "" : val}" placeholder="${autoVal ?? ""}" aria-label="${unit} per day${auto ? " (auto)" : ""}"><span>${unit}</span></label>
+      <button type="button" class="round sm" data-d="1" aria-label="More ${unit}">+</button></div>`;
+  }
+  // Wire steppers inside root; onChange runs after every change.
+  function wireSteppers(root, onChange) {
+    root.querySelectorAll(".stp").forEach(el => {
+      const kind = el.dataset.kind, [min, max, step] = LIMITS[kind], inp = el.querySelector("input");
+      let prev = inp.value === "" ? (+el.dataset.auto || null) : +inp.value;
+      const set = (v) => {
+        v = Math.min(max, Math.max(min, Math.round(v / step) * step));
+        // Protein and carbs carry 4 kcal per gram, fat 9: move the calorie target with them
+        const per = { p: 4, c: 4, f: 9 }[kind];
+        if (per && prev != null && v !== prev) {
+          const [kmin, kmax] = LIMITS.k;
+          S.myK = Math.min(kmax, Math.max(kmin, Math.round(targets().kcal + (v - prev) * per)));
+          const kin = root.querySelector('.stp[data-kind="k"] input'); if (kin) kin.value = S.myK;
+        }
+        inp.value = v; prev = v;
+        S[MYKEY[kind]] = v;
+        save(); onChange();
+      };
+      const cur = () => inp.value === "" ? (+el.dataset.auto || min) : +inp.value;
+      el.querySelectorAll("[data-d]").forEach(b => b.addEventListener("click", () => set(cur() + (+b.dataset.d) * BUMP[kind])));
+      inp.addEventListener("change", () => {
+        if (inp.value === "" && (kind === "c" || kind === "f")) { S[MYKEY[kind]] = null; save(); onChange(); return; }
+        set(+inp.value || min);
+      });
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") inp.blur(); });
+    });
+  }
+  function targets() {
+    const g = GOALS[S.goal];
+    return {
+      protein: S.myP ?? rec().protein,
+      kcal: S.myK ?? rec().kcal,
+      carbs: S.myC ?? null,
+      fat: S.myF ?? null,
+    };
+  }
+  // Restaurant items the person has added for today: [{ id, price }]
+  // Restaurant orders are saved by chain + item name so they survive data updates
+  const restKey = (r) => r.chain + "|" + r.name + (r.region === "WS" ? "|WS" : "");
+  // McDonald's India is two companies with different menus: West & South (Westlife) and North & East.
+  const WS_CITIES = new Set(["Bengaluru", "Mumbai", "Pune", "Hyderabad", "Chennai", "Ahmedabad", "Indore"]);
+  const mcdRegion = () => WS_CITIES.has(S.city) ? "WS" : "NE";
+  // Price from the chain's own website (read for Delhi NCR; McDonald's West & South for Mumbai); elsewhere it's shown as approximate.
+  // Each chain's own ordering website (plain links to their public pages)
+  const CHAIN_SITE = {
+    "KFC": "https://online.kfc.co.in/menu",
+    "McDonald's": "https://www.mcdonaldsindia.com/",
+    "Domino's": "https://www.dominos.co.in/menu",
+    "Pizza Hut": "https://www.pizzahut.co.in/",
+    "Burger King": "https://www.burgerking.in/",
+  };
+  const priceOf = (r) => {
+    const pr = r.prices; if (!pr) return null;
+    if (pr["*"]) return { v: pr["*"], exact: true };
+    if (S.city && pr[S.city]) return { v: pr[S.city], exact: true };
+    const ref = r.region === "WS" ? "Mumbai" : "Delhi NCR";
+    const c = pr[ref] ? ref : Object.keys(pr)[0];
+    return { v: pr[c], exact: false, from: c };
+  };
+  const REST_BY_KEY = new Map(REST.map(r => [restKey(r), r]));
+  const outItems = () => (S.out || []).map(o => Object.assign({ r: REST_BY_KEY.get(o.key) }, o)).filter(o => o.r);
+  const outSum = (k) => outItems().reduce((s, o) => s + (k === "price" ? (+o.price || 0) : (o.r[k] || 0)) * (o.frac || 1), 0);
+  // Slices in a whole pizza, so people can log the slices they actually eat
+  const slicesOf = (r) => /\(Personal\)/.test(r.name) ? 4 : /\(Medium\)/.test(r.name) ? 6 : /\(Large\)/.test(r.name) ? 8
+    : r.chain === "Domino's" && /Regular|Pizza Mania/.test(r.name) ? 4 : r.chain === "Domino's" && /half: 3 slices/.test(r.name) ? 3 : null;
+  // Readymade picks are saved by product link so they survive data updates
+  const byLink = new Map(FOODS.filter(f => f.cat === "Ready non-veg").map(f => [f.link, f]));
+  const rtePicks = () => (S.rte || []).map(x => byLink.get(x.link) && { id: byLink.get(x.link).id, g: x.g }).filter(Boolean);
+  // The person's own pack prices: { productKey: { p: price, d: "YYYY-MM-DD" } } -> { foodId: price }
+  function myPriceMap() {
+    const m = {};
+    for (const [k, v] of Object.entries(S.myPrices || {})) { const f = FOOD_BY_KEY.get(k); if (f && v && v.p > 0) m[f.id] = v.p; }
+    return m;
+  }
+  // Today's date in the person's own time zone (toISOString would roll over at 5:30 am in India)
+  const localDay = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  // Tapping an "est." tag explains it (hover titles don't exist on phones)
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest && e.target.closest(".est");
+    document.querySelectorAll(".toast").forEach(x => x.remove());
+    if (!t) return;
+    e.stopPropagation(); e.preventDefault();
+    const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t.getAttribute("title");
+    document.body.appendChild(d); setTimeout(() => d.remove(), 5000);
+  }, true);
+  // What's an estimate rather than an exact figure, so the app can say so
+  const priceEst = (f) => !myPrice(f) && (f.store === "Licious" ? S.city !== "Bengaluru" : S.city !== "Delhi NCR");
+  const estTag = (why) => `<span class="est" title="${esc(why)}">est.</span>`;
+  const priceWhy = (f) => f.store === "Licious" ? "Licious price in Bangalore on 4 Oct. Yours may differ." : `${storeName(f)} price in Gurugram on 3 Oct. Offers change, so yours may differ a little. Tap the price in Shopping to use yours.`;
+  const MACRO_WHY = "The numbers on this pack's label don't add up exactly (often fibre or sugar alcohols), so treat them as close, not exact.";
+  const myPrice = (f) => (S.myPrices || {})[f.key];
+  function opts(extra) {
+    const t = targets();
+    return Object.assign({
+      budget: Math.max(0, S.budget - outSum("price")), protein: t.protein, kcal: t.kcal, carbs: t.carbs, fat: t.fat, diet: S.diet || "nonveg", kitchen: S.kitchen !== false, gear: S.gear,
+      have: { p: S.meals * MESS.p + outSum("p"), kcal: S.meals * MESS.kcal + outSum("kcal"), c: S.meals * MESS.c + outSum("c"), f: S.meals * MESS.f + outSum("f") }, exclude: S.exclude,
+      include: rtePicks(), style: S.style || "balanced", prices: myPriceMap(),
+    }, extra);
+  }
+
+  const screen = $("#screen");
+
+  // Light / dark: follows the phone until the person taps the button, then remembers their choice on this device
+  const SUN = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;
+  const MOON = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>`;
+  const sysDark = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+  const isDark = () => (document.documentElement.dataset.theme || (sysDark && sysDark.matches ? "dark" : "light")) === "dark";
+  function themeButton() {
+    const b = $("#themeBtn"), dark = isDark();
+    b.innerHTML = dark ? SUN : MOON;
+    b.setAttribute("aria-label", dark ? "Switch to light mode" : "Switch to dark mode");
+    b.title = b.getAttribute("aria-label");
+  }
+  $("#themeBtn").addEventListener("click", () => {
+    const next = isDark() ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem("theme", next); } catch (e) {}
+    themeButton();
+  });
+  if (sysDark && sysDark.addEventListener) sysDark.addEventListener("change", themeButton);
+  themeButton();
+  function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); }
+
+  function chrome() {
+    const quiz = S.step >= 0 && S.step < 4;
+    $("#dots").hidden = !quiz;
+    [...$("#dots").children].forEach((d, i) => d.classList.toggle("on", i === S.step));
+    $("#back").hidden = !(quiz && S.step > 0);
+    $("#brand").hidden = quiz && S.step > 0;
+    $("#back").hidden = $("#back").hidden && !(S.step < 0 && authMode !== "home");
+    if (currentUser && (authMode === "setup" || choosing)) $("#back").hidden = true;   // signed in: no stepping back into guest mode
+  }
+  $("#back").addEventListener("click", () => {
+    if (S.step < 0) { authMode = "home"; render(); return; }
+    go(Math.max(0, S.step - 1));
+  });
+
+  function option(key, val, t, d) {
+    return `<button type="button" class="opt" data-k="${key}" data-v="${val}" aria-pressed="${S[key] === val}">
+      <span><div class="t">${t}</div>${d ? `<div class="d">${d}</div>` : ""}</span><span class="tick"></span></button>`;
+  }
+
+  function render() {
+    chrome();
+    if (typeof solver === "undefined") {
+      screen.innerHTML = `<div class="step"><h1>The planner couldn't load.</h1><p class="q-sub">Check your internet connection and reload the page.</p></div>`;
+      return;
+    }
+    if (S.step < 0) return welcome();
+    [stepDiet, stepLife, stepBody, stepBudget, result][S.step]();
+  }
+
+  // 0. Welcome and sign-in (Google, or email + password via Supabase), or guest on this device only.
+  // Google's own "G" (from Google's sign-in branding assets), as their guidelines require on this button
+  const G_LOGO = `<img src="__GLOGO__" alt="" width="20" height="20">`;
+  let authMode = "home", authMsg = "", authErrKind = "link", choosing = false, pwCreate = false;
+  // Supabase's error text, in plain words
+  function pwError(m, create) {
+    const t = String(m || "").toLowerCase();
+    if (/invalid login credentials/.test(t)) return "Wrong email or password. If you signed up with Google, use Continue with Google.";
+    if (/already (been )?registered|already exists/.test(t)) return "There's already an account with this email. Log in instead.";
+    if (/password.*(at least|characters|weak|short)/.test(t)) return "Use a longer password: at least 8 characters.";
+    if (/rate limit|too many/.test(t)) return "Too many tries. Wait a few minutes and try again.";
+    if (/not confirmed/.test(t)) return "This email isn't confirmed yet. Use Continue with Google instead.";
+    if (/signups? not allowed|disabled/.test(t)) return "New email accounts are switched off right now. Use Continue with Google.";
+    if (/fetch|network|timeout|load failed/.test(t)) return "Couldn't reach the server. Check your connection and try again.";
+    return create ? "Couldn't create your account. Please try again." : "Couldn't log you in. Please try again.";
+  }
+  const CITIES = CITY_LIST;
+  const hasPlan = () => !!(S.diet && S.kitchen !== null);
+  function welcome() {
+    if (authMode === "setup") return finishSetup();
+    if (authMode === "home") {
+      screen.innerHTML = `<section class="step welcome">
+        <div class="w-mark" aria-hidden="true"><span></span></div>
+        <h1>Hit your protein on any budget.</h1>
+        <p class="q-sub">Tell us what you eat and what you can spend. We'll find the cheapest food that gets you there, from Blinkit and Zepto.</p>
+        <div class="auth-btns">
+          ${cloud.enabled ? `<button type="button" class="cta gbtn" id="google">${G_LOGO}Continue with Google</button>
+          <button type="button" class="ghost" id="emailMode">Continue with email</button>` : ""}
+          <button type="button" class="${cloud.enabled ? "link guest" : "cta"}" id="guest">Try without an account</button>
+        </div>
+        ${cloud.enabled ? `<p class="fine-note">Signing in keeps your plan on all your devices. Without an account it stays on this one.</p>` : ""}
+        <p class="fine-note legal"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p></section>`;
+      const g = $("#google"); if (g) g.addEventListener("click", async () => {
+        g.disabled = true; loggedOut = false; lsSet("mbp_loggedout", null);
+        try { await cloud.google(); } catch (e) { g.disabled = false; authMode = "error"; authErrKind = "google"; authMsg = "Sign-in didn't finish. Please try again."; render(); }
+      });
+      const em = $("#emailMode"); if (em) em.addEventListener("click", () => { authMode = "email"; pwCreate = false; authMsg = ""; render(); });
+      $("#guest").addEventListener("click", () => { S.guest = true; go(hasPlan() ? 4 : 0); });
+      return;
+    }
+    if (authMode === "waiting") {
+      // Came back from Google or an email link and the sign-in is still finishing (slow network)
+      screen.innerHTML = `<section class="step">
+        <h1>Still signing you in…</h1>
+        <p class="q-sub" role="status">This can take a few seconds on a slow connection.</p>
+        <button type="button" class="link guest" id="startOver">Start again</button>
+      </section>`;
+      $("#startOver").addEventListener("click", () => { authMode = "home"; render(); });
+      return;
+    }
+    if (authMode === "error") {
+      // After a cancelled or failed Google sign-in, retrying Google comes first; otherwise email login does
+      const googleFirst = authErrKind === "google" && cloud.enabled;
+      screen.innerHTML = `<section class="step">
+        <h1>Couldn't sign you in</h1>
+        <p class="q-sub" role="alert">${esc(authMsg)}</p>
+        ${googleFirst ? `<button type="button" class="cta gbtn" id="googleRetry">${G_LOGO}Continue with Google</button>
+        <button type="button" class="ghost" id="useEmail">Continue with email</button>`
+        : `<button type="button" class="cta" id="useEmail">Continue with email</button>
+        ${cloud.enabled ? `<button type="button" class="ghost gbtn" id="google">${G_LOGO}Continue with Google</button>` : ""}`}
+      </section>`;
+      $("#useEmail").addEventListener("click", () => { authMode = "email"; pwCreate = false; authMsg = ""; render(); });
+      const g = $("#google") || $("#googleRetry");
+      if (g) g.addEventListener("click", () => { loggedOut = false; lsSet("mbp_loggedout", null); cloud.google().catch(() => {}); });
+      return;
+    }
+    // Email + password: log in, or create an account
+    const create = pwCreate;
+    screen.innerHTML = `<section class="step">
+      <h1>${create ? "Create an account" : "Log in with email"}</h1>
+      <form class="auth" id="auth" novalidate>
+        <label class="fld"><span>Email</span><input id="aEmail" type="email" autocomplete="email" required placeholder="you@example.com" maxlength="254"></label>
+        <label class="fld"><span>Password</span>
+          <span class="pw-row"><input id="aPass" type="password" autocomplete="${create ? "new-password" : "current-password"}" required minlength="8" maxlength="72"${create ? ` aria-describedby="pwHint"` : ""}>
+          <button type="button" class="pw-show" id="pwShow" aria-pressed="false">Show</button></span></label>
+        ${create ? `<p class="fine-note" id="pwHint">At least 8 characters.</p>` : ""}
+        <p class="err" id="aErr" role="alert"></p>
+        <p class="ok-msg" id="aOk" role="status" hidden></p>
+        <button type="submit" class="cta" id="pwGo">${create ? "Create account" : "Log in"}</button>
+      </form>
+      <button type="button" class="link guest" id="pwSwitch">${create ? "Already have an account? Log in" : "New here? Create an account"}</button>
+      ${create ? "" : `<p class="fine-note">Forgot your password? If it's a Gmail address, use Continue with Google instead. Otherwise <a href="mailto:gamezderister@gmail.com">email us</a>.</p>`}
+    </section>`;
+    $("#pwShow").addEventListener("click", (e) => {
+      const i = $("#aPass"), show = i.type === "password"; i.type = show ? "text" : "password";
+      e.currentTarget.textContent = show ? "Hide" : "Show"; e.currentTarget.setAttribute("aria-pressed", String(show));
+    });
+    $("#pwSwitch").addEventListener("click", () => { const em = $("#aEmail").value; pwCreate = !create; render(); $("#aEmail").value = em; });
+    $("#auth").addEventListener("submit", async (e) => {
+      e.preventDefault(); loggedOut = false; lsSet("mbp_loggedout", null);
+      const err = $("#aErr"), okm = $("#aOk"), btn = $("#pwGo");
+      err.textContent = ""; okm.hidden = true;
+      const email = $("#aEmail").value.trim().toLowerCase(), password = $("#aPass").value;
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent = "Enter a valid email address, like name@gmail.com."; return; }
+      if (password.length < 8) { err.textContent = create ? "Use a longer password: at least 8 characters." : "Enter your password (at least 8 characters)."; return; }
+      btn.disabled = true;
+      const r = await cloud.password({ email, password, create }).catch(e2 => ({ error: (e2 && e2.message) || "network" }));
+      if (!document.body.contains(btn)) return;   // already moved on (signed in via onChange)
+      btn.disabled = false;
+      if (r && r.error) { err.textContent = pwError(r.error, create); return; }
+      if (r && r.needsConfirm) { okm.textContent = "Check your inbox to confirm your email, then log in."; okm.hidden = false; return; }
+      if (r && r.user) afterSignIn(r.user);
+    });
+  }
+
+  // First sign-in: name (pre-filled from Google) and city
+  function finishSetup() {
+    screen.innerHTML = `<section class="step">
+      <h1>Finish setup</h1>
+      <form class="auth" id="setup" novalidate>
+        <label class="fld"><span>Name</span><input id="aName" autocomplete="given-name" maxlength="60" required placeholder="Your first name" value="${esc(S.name || (currentUser && currentUser.name) || "")}"></label>
+        <label class="fld"><span>City</span><select id="aCity" required>
+          <option value="">Choose your city</option>${CITIES.map(c => `<option${S.city === c ? " selected" : ""}>${c}</option>`).join("")}</select></label>
+        <label class="fld"><span>Area or PIN code <i>(optional)</i></span><input id="aArea" maxlength="80" autocomplete="postal-code" placeholder="e.g. Knowledge Park, 201310" value="${esc(S.area || "")}"></label>
+        <p class="err" id="aErr" role="alert"></p>
+        <button type="submit" class="cta">Continue</button>
+      </form>
+    </section>`;
+    $("#setup").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = $("#aName").value.trim().slice(0, 60), city = $("#aCity").value, area = $("#aArea").value.trim().slice(0, 80), err = $("#aErr");
+      if (!name) { err.textContent = "Enter your name."; return; }
+      if (!city) { err.textContent = "Choose your city so we can show prices near you."; return; }
+      S.name = name; S.city = city; S.area = area; authMode = "home";
+      go(hasPlan() ? 4 : 0);
+    });
+  }
+
+  // What the sign-in redirect left in the address bar, in words a person understands
+  function authErrorFromUrl() {
+    const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.replace(/^#/, ""));
+    const get = (k) => q.get(k) || h.get(k) || "";
+    const text = (get("error_description") + " " + get("error") + " " + get("error_code")).toLowerCase();
+    if (/code.?verifier|flow.?state/.test(text)) return { kind: "link", msg: "Open the link in the same browser you asked for it from." };
+    if (/expired|otp_expired|already used|invalid/.test(text) && /link|otp|token/.test(text)) return { kind: "link", msg: "That link has expired or was already used." };
+    if (text.trim()) return { kind: "google", msg: "Sign-in didn't finish. Please try again." };
+    return null;
+  }
+  // After a sign-in (on load or later): name from the account, then Finish setup or the plan
+  let signingIn = false, loggedOut = false;
+  async function afterSignIn(u) {
+    if (signingIn || currentUser) return;   // the stored session can arrive from both startAuth and onChange
+    signingIn = true; loggedOut = false;
+    track("account");
+    currentUser = u;
+    if (u.offline) setNote(REACH_NOTE, 8000);
+    // This device's plan already belongs to this account: show it now, catch up with the account in the background
+    if (ls("mbp_owner") === u.id && hasPlan() && S.city) {
+      S.name = S.name || ls("mbp_owner_name") || u.name || null;
+      signingIn = false;
+      if (S.name) { authMode = "home"; go(4); pullOnOpen(); return; }
+      signingIn = true;
+    }
+    try { await pullOnOpen(); } finally { signingIn = false; }
+    if (!S.name) S.name = (ls("mbp_owner") === u.id && ls("mbp_owner_name")) || u.name || null;
+    if (!S.name || !S.city) { authMode = "setup"; S.step = -1; render(); return; }
+    authMode = "home"; go(hasPlan() ? 4 : 0);
+  }
+  // Sync status note (bottom of the screen)
+  let noteTimer = null;
+  function setNote(msg, ms) {
+    let el = document.getElementById("syncNote");
+    if (!el) { el = document.createElement("div"); el.id = "syncNote"; el.className = "sync-note"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+    clearTimeout(noteTimer);
+    el.textContent = msg; el.hidden = !msg;
+    if (msg && ms) noteTimer = setTimeout(() => { if (el.textContent === msg) { el.textContent = ""; el.hidden = true;
+      if (msg === REACH_NOTE && currentUser && ls("mbp_pending")) setNote(PENDING_NOTE); } }, ms);
+  }
+  const PENDING_NOTE = "Saved on this phone · will sync";
+  const REACH_NOTE = "Couldn't reach your account. Using this phone's copy.";
+  const keepLocal = () => ({ step: S.step, guest: S.guest, name: S.name });
+  const ls = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} };
+  // The last copy this device and the account agreed on (only valid for the account that owns this device's data)
+  function readBase() {
+    if (!currentUser || ls("mbp_owner") !== currentUser.id) return null;
+    try { const b = JSON.parse(ls("mbp_base") || "null"); return b ? clean(b) : null; } catch (e) { return null; }
+  }
+  // Take the account's copy into this device
+  function applyRemote(row) {
+    const before = sig(S), k = keepLocal();
+    const remote = clean(row.state);
+    const srv = Date.parse(row.updated_at);
+    const cap = (Number.isFinite(srv) ? srv : Date.now()) + 300000;   // a wrong clock can't make a copy "newer" for ever
+    if (remote.updatedAt > cap) remote.updatedAt = cap;
+    const base = readBase();
+    S = Object.assign(base ? threeWay(base, S, remote) : mergeState(S, remote), k);
+    if (!S.name && row.name) S.name = String(row.name).slice(0, 60);
+    persist(); lastSig = sig(S);
+    return sig(S) !== before;
+  }
+  // Read the account, merge, and upload only if this device has something new
+  let lastPull = 0;
+  async function syncNow() {
+    if (!currentUser) return false;
+    if (syncing) { syncAgain = true; return false; }
+    syncing = true; clearTimeout(syncTimer); syncWaiting = false; lastPull = Date.now();
+    let ok = false, changed = false;
+    try {
+      const who = currentUser;
+      const row = await cloud.load();
+      if (currentUser !== who) throw new Error("signed out");
+      if (row) changed = applyRemote(row);
+      const up = trimForUpload(S);
+      const needUp = !row || sig(up) !== sig(clean(row.state)) || (row.name || null) !== (S.name || null)
+        || (row.city || null) !== (S.city || null) || (row.area || "") !== (S.area || "");
+      if (needUp) await cloud.save({ name: S.name || null, city: S.city || null, area: S.area || "", state: up });
+      if (currentUser !== who) throw new Error("signed out");
+      lsSet("mbp_pending", null); lsSet("mbp_owner", who.id); lsSet("mbp_owner_name", S.name || "");
+      lsSet("mbp_base", JSON.stringify(up));
+      const el = document.getElementById("syncNote"); if (el && el.textContent === PENDING_NOTE) setNote("");
+      ok = true;
+    } catch (e) {
+      if (currentUser) { lsSet("mbp_pending", "1");
+        // "Couldn't reach your account" says more; the pending note follows when it fades
+        const el = document.getElementById("syncNote"); if (!(el && !el.hidden && el.textContent === REACH_NOTE)) setNote(PENDING_NOTE); }
+    }
+    syncing = false;
+    if (changed && S.step === 4) render();
+    if (syncAgain) { syncAgain = false; return syncNow(); }
+    return ok;
+  }
+  // Two different plans on first sign-in: let the person pick
+  function chooseCopy() {
+    return new Promise((resolve) => {
+      choosing = true; chrome();
+      screen.innerHTML = `<section class="step">
+        <h1>You have two plans</h1>
+        <p class="q-sub">This phone has a plan, and your account has a different one. Which do you want to keep?</p>
+        <button type="button" class="cta" id="keepPhone">Keep this phone's plan</button>
+        <button type="button" class="ghost" id="useAccount">Use my account's plan</button>
+      </section>`;
+      $("#keepPhone").addEventListener("click", () => { choosing = false; resolve("phone"); });
+      $("#useAccount").addEventListener("click", () => { choosing = false; resolve("account"); });
+    });
+  }
+  async function pullOnOpen() {
+    const who = currentUser, owner = ls("mbp_owner");
+    if (owner && owner !== currentUser.id) {
+      // This device's data belongs to another account (it never logged out here): don't hand it to this one
+      const k = { step: S.step, guest: false, name: null };
+      S = Object.assign(fresh0(), k); persist(); lastSig = sig(S);
+      ["mbp_base", "mbp_owner", "mbp_owner_name", "mbp_pending"].forEach(x => lsSet(x, null));
+    }
+    let row;
+    try { row = await cloud.load(); }
+    catch (e) { if (currentUser === who) setNote(REACH_NOTE, 8000); return; }
+    if (currentUser !== who) return;   // logged out while loading: don't bring the plan back
+    if (row) {
+      const remote = clean(row.state), k = keepLocal();
+      const remotePlan = !!(remote.diet && remote.kitchen !== null);
+      if (remotePlan && hasPlan() && ls("mbp_owner") !== currentUser.id) {
+        const pick = await chooseCopy();
+        if (currentUser !== who) return;
+        if (pick === "account") S = Object.assign(remote, k);
+        S.updatedAt = Date.now() + (pick === "account" ? 0 : 1);
+      } else if (remotePlan && !hasPlan()) {
+        S = Object.assign(remote, k);
+      }
+      if (!S.name && row.name) S.name = String(row.name).slice(0, 60);
+      if (!S.city && CITY_LIST.includes(row.city)) S.city = row.city;
+      if (!S.area && typeof row.area === "string") S.area = row.area.slice(0, 80);
+      persist(); lastSig = sig(S);
+    }
+    if (!S.name) S.name = (ls("mbp_owner") === currentUser.id && ls("mbp_owner_name")) || currentUser.name || null;
+    lsSet("mbp_owner", currentUser.id);
+    await syncNow();
+  }
+  // Coming back to the app (tab shown, window focused, network back): catch up with other devices
+  const retry = () => {
+    if (!currentUser || syncing) return;
+    if (ls("mbp_pending") === "1" || Date.now() - lastPull > 3000) syncNow();
+  };
+  window.addEventListener("online", retry);
+  window.addEventListener("focus", retry);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") retry();
+    else if (currentUser && syncWaiting) syncNow();   // app hidden or closing: don't hold a change back
+  });
+  window.addEventListener("pagehide", () => { if (currentUser && syncWaiting) syncNow(); });
+  // Another tab on this device changed the plan, or logged out
+  window.addEventListener("storage", (e) => {
+    if (e.key !== "mbp") return;
+    if (e.newValue === null) {
+      if (currentUser || S.step >= 0) { clearTimeout(syncTimer); currentUser = null; loggedOut = true; S = fresh0(); lastSig = null; authMode = "home"; setNote(""); render(); }
+      return;
+    }
+    try { S = Object.assign(clean(JSON.parse(e.newValue)), keepLocal()); lastSig = sig(S); if (S.step === 4) render(); } catch (err) {}
+  });
+
+  async function startAuth() {
+    const urlErr = authErrorFromUrl();
+    const hadCode = new URLSearchParams(location.search).has("code");
+    let u = null;
+    try { u = await Promise.race([cloud.session(), new Promise(r => setTimeout(() => r(null), 4000))]); } catch (e) { u = null; }
+    // Logged out on this device and not coming back from a sign-in: a session that reappeared is a leftover
+    if (u && ls("mbp_loggedout") && !hadCode) { loggedOut = true; await cloud.signOut(); u = null; }
+    if (location.search || location.hash) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+    if (u) return afterSignIn(u);
+    const verifierWaiting = (() => { try { return Object.keys(localStorage).some(k => k.endsWith("-code-verifier")); } catch (e) { return false; } })();
+    if (urlErr) { authMode = "error"; authErrKind = urlErr.kind; authMsg = urlErr.msg; }
+    else if (hadCode && verifierWaiting) {
+      authMode = "waiting";   // the sign-in is still finishing; onChange takes over when it does
+      setTimeout(() => {
+        if (authMode === "waiting" && !currentUser) { authMode = "error"; authErrKind = "google"; authMsg = "Couldn't finish signing in. Check your connection and try again."; render(); }
+      }, 15000);
+    }
+    else if (hadCode) { authMode = "error"; authErrKind = "link"; authMsg = "Open the link in the same browser you asked for it from."; }
+    render();
+  }
+
+  // 1. Diet
+  function stepDiet() {
+    screen.innerHTML = `<section class="step">
+      <h1>What do you eat?</h1>
+      <div class="options">
+        ${option("diet", "veg", "Vegetarian", "Dairy is fine")}
+        ${option("diet", "egg", "Vegetarian + eggs")}
+        ${option("diet", "nonveg", "Everything", "Chicken, fish, eggs")}
+      </div></section>`;
+    screen.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+      S.diet = b.dataset.v; S.exclude = []; save();
+      screen.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", x === b));
+      setTimeout(() => go(1), 180);
+    }));
+  }
+
+  // 2. Kitchen and mess
+  // Hostel / PG: what's in the room decides which foods are possible
+  const GEAR = [["kettle", "Electric kettle"], ["microwave", "Microwave"], ["fridge", "Fridge"]];
+  const gearPills = () => `<div class="pills small gear">${GEAR.map(([k, t]) =>
+    `<button type="button" class="pill" data-gear="${k}" aria-pressed="${!!(S.gear || {})[k]}">${t}</button>`).join("")}</div>`;
+  function wireGear(root, after) {
+    root.querySelectorAll("[data-gear]").forEach(b => b.addEventListener("click", () => {
+      S.gear = Object.assign({ kettle: false, microwave: false, fridge: false }, S.gear);
+      S.gear[b.dataset.gear] = !S.gear[b.dataset.gear]; S.exclude = []; save();
+      b.setAttribute("aria-pressed", S.gear[b.dataset.gear]); after();
+    }));
+  }
+  const gearText = () => { const g = S.gear || {}, have = GEAR.filter(([k]) => g[k]).map(([, t]) => t.toLowerCase());
+    return have.length ? "No stove · " + have.join(", ") : "No cooking at all"; };
+  // Where you live decides the kitchen: home/flat = kitchen, PG = usually a kitchen (ask), hostel = no stove
+  function setPlace(v) {
+    S.place = v; S.kitchen = v === "home" || (v === "pg" && S.pgKitchen !== false); S.exclude = []; save();
+  }
+  function stepLife() {
+    const place = S.place || null;
+    const opt = (v, t, d) => `<button type="button" class="opt" data-v="${v}" aria-pressed="${place === v}"><span><div class="t">${t}</div><div class="d">${d}</div></span><span class="tick"></span></button>`;
+    screen.innerHTML = `<section class="step">
+      <h1>Where do you live?</h1>
+      <div class="options">
+        ${opt("home", "Home or flat", "Your own kitchen: dal, atta, soya, chicken are all on the table")}
+        ${opt("pg", "PG", "Most PGs have a kitchen you can use")}
+        ${opt("hostel", "Hostel", "No stove. Only food you can eat as it is or make in your room")}
+      </div>
+      <div class="hostel" id="pgq" ${place === "pg" ? "" : "hidden"}>
+        <div class="row-label">Can you cook in your PG's kitchen?</div>
+        <div class="pills small" id="pgk">
+          <button type="button" class="pill" data-k="1" aria-pressed="${S.pgKitchen !== false}">Yes, I can cook</button>
+          <button type="button" class="pill" data-k="0" aria-pressed="${S.pgKitchen === false}">No kitchen</button>
+        </div>
+      </div>
+      <div class="hostel" id="hostel" ${S.kitchen === false ? "" : "hidden"}>
+        <div class="row-label">What do you have in your room? Tap all that apply.</div>
+        ${gearPills()}
+        <p class="hint-sm">Nothing ticked = no cooking at all: bread, sattu, whey, bars, muesli, shakes, curd cups.</p>
+      </div>
+      <div>
+        <div class="row-label">Mess, PG or home-cooked meals you already eat each day</div>
+        <div class="pills" id="meals">
+          ${[0, 1, 2, 3].map(n => `<button type="button" class="pill" data-n="${n}" aria-pressed="${S.meals === n}">${n === 0 ? "None" : n}</button>`).join("")}
+        </div>
+      </div>
+      <button type="button" class="cta" id="next" ${place ? "" : "disabled"}>Continue</button>
+    </section>`;
+    const sync = () => {
+      screen.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", x.dataset.v === S.place));
+      screen.querySelectorAll("#pgk .pill").forEach(x => x.setAttribute("aria-pressed", (x.dataset.k === "1") === (S.pgKitchen !== false)));
+      $("#pgq").hidden = S.place !== "pg";
+      $("#hostel").hidden = S.kitchen !== false;
+      $("#next").disabled = !S.place;
+    };
+    screen.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => { setPlace(b.dataset.v); sync(); }));
+    screen.querySelectorAll("#pgk .pill").forEach(b => b.addEventListener("click", () => { S.pgKitchen = b.dataset.k === "1"; setPlace("pg"); sync(); }));
+    screen.querySelectorAll("#meals .pill").forEach(b => b.addEventListener("click", () => {
+      S.meals = +b.dataset.n; save();
+      screen.querySelectorAll("#meals .pill").forEach(x => x.setAttribute("aria-pressed", x === b));
+    }));
+    wireGear(screen, () => {});
+    $("#next").addEventListener("click", () => go(2));
+  }
+
+  // 3. Body and goal
+  function stepBody() {
+    screen.innerHTML = `<section class="step">
+      <h1>About you</h1>
+      <div class="bio">
+        <div class="pills small" id="sex">${[["male", "Male"], ["female", "Female"]].map(([k, t]) => `<button type="button" class="pill" data-sex="${k}" aria-pressed="${S.sex === k}">${t}</button>`).join("")}</div>
+        <div class="stps2" id="bio">${stepper("a", S.age || 19)}${stepper("h", S.height || 170)}</div>
+      </div>
+      <div class="big">
+        <button type="button" class="round" id="wMinus" aria-label="Decrease weight">−</button>
+        <div class="val" id="wVal" aria-live="polite">${S.weight}<small>kg</small></div>
+        <button type="button" class="round" id="wPlus" aria-label="Increase weight">+</button>
+      </div>
+      <div>
+        <div class="row-label">How active are you?</div>
+        <div class="pills small" id="act">${Object.entries(ACTIVITY).map(([k, a]) => `<button type="button" class="pill" data-act="${k}" aria-pressed="${(S.activity || "light") === k}">${a.t}</button>`).join("")}</div>
+      </div>
+      <div class="options">
+        ${Object.entries(GOALS).map(([k, g]) => option("goal", k, g.t, g.d)).join("")}
+      </div>
+      <div class="targets">
+        <div class="row-label">Your daily targets. Change them to whatever suits you.</div>
+        <div id="stps"></div>
+        <p class="preview" id="tgt"></p>
+      </div>
+      <button type="button" class="cta" id="next">Continue</button>
+    </section>`;
+    const recLine = () => {
+      const r = rec(), custom = S.myP != null || S.myK != null;
+      const goalTxt = S.goal === "lose" ? "minus 20% to lose fat" : S.goal === "muscle" ? "plus 10% to build muscle" : "kept the same to maintain";
+      $("#tgt").innerHTML = `Suggested: <b>${r.protein} g protein, ${fmt(r.kcal)} kcal</b> (about ${r.fat} g fat, ${r.carbs} g carbs).`
+        + `<span class="why">You burn about ${fmt(Math.round(r.burn / 10) * 10)} kcal a day (${fmt(Math.round(r.bmr / 10) * 10)} at rest × ${r.act} for activity), ${goalTxt}. Protein is ${r.pk} g per kg${r.refW < S.weight - 0.5 ? ` of ${Math.round(r.refW)} kg (a healthy weight for your height)` : ""}.${S.sex ? "" : " Pick male or female for a closer number."} These are estimates; adjust anytime.</span>`
+        + (custom ? ` <button type="button" class="link" id="useRec">Use suggested</button>` : "");
+      const u = $("#useRec");
+      if (u) u.addEventListener("click", () => { S.myP = null; S.myK = null; save(); show(); });
+    };
+    const show = () => {
+      $("#wVal").innerHTML = `${S.weight}<small>kg</small>`;
+      const t = targets();
+      $("#stps").innerHTML = stepper("p", t.protein) + stepper("k", t.kcal);
+      wireSteppers($("#stps"), recLine);
+      recLine();
+    };
+    let hold;
+    const nudge = (d) => { S.weight = Math.min(150, Math.max(35, S.weight + d)); fresh(); show(); };
+    [["#wMinus", -1], ["#wPlus", 1]].forEach(([id, d]) => {
+      const b = $(id);
+      b.addEventListener("pointerdown", () => { nudge(d); hold = setInterval(() => nudge(d), 120); });
+      ["pointerup", "pointerleave", "pointercancel"].forEach(ev => b.addEventListener(ev, () => clearInterval(hold)));
+      b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); nudge(d); } });
+    });
+    // Changing anything about you resets the targets to the new suggestion (you can still edit them after)
+    const fresh = () => { S.myP = null; S.myK = null; S.myC = null; S.myF = null; save(); };
+    wireSteppers($("#bio"), () => { fresh(); show(); });
+    screen.querySelectorAll("[data-sex]").forEach(b => b.addEventListener("click", () => {
+      S.sex = b.dataset.sex; fresh(); screen.querySelectorAll("[data-sex]").forEach(x => x.setAttribute("aria-pressed", x === b)); show();
+    }));
+    screen.querySelectorAll("[data-act]").forEach(b => b.addEventListener("click", () => {
+      S.activity = b.dataset.act; fresh(); screen.querySelectorAll("[data-act]").forEach(x => x.setAttribute("aria-pressed", x === b)); show();
+    }));
+    screen.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
+      S.goal = b.dataset.v; fresh();
+      screen.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", x === b));
+      show();
+    }));
+    show();
+    $("#next").addEventListener("click", () => go(3));
+  }
+
+  // 4. Budget
+  function setFill(r) { r.style.setProperty("--fill", ((r.value - r.min) / (r.max - r.min) * 100) + "%"); }
+  function stepBudget() {
+    screen.innerHTML = `<section class="step">
+      <h1>Daily food budget</h1>
+      <div>
+        <div class="budget-val" id="bVal">₹${S.budget}<small> / day</small></div>
+        <input type="range" id="budget" min="40" max="500" step="10" value="${S.budget}" aria-label="Daily budget in rupees">
+        <div class="scale"><span>₹40</span><span>₹500</span></div>
+      </div>
+      <p class="preview" id="bPrev"></p>
+      <button type="button" class="cta" id="next">Show my plan</button>
+    </section>`;
+    const r = $("#budget");
+    let t;
+    const upd = () => {
+      S.budget = +r.value; save(); setFill(r);
+      $("#bVal").innerHTML = `₹${S.budget}<small> / day</small>`;
+      clearTimeout(t);
+      t = setTimeout(() => {
+        const p = planDay(FOODS, opts(), solver);
+        const tg = targets();
+        $("#bPrev").innerHTML = !p.ok ? "These targets can't be met with the foods we have."
+          : p.closest ? `Your exact targets aren't reachable with these foods, so you'll get the closest plan (about <b>${fmt(p.totals.p)} g protein</b>).`
+          : p.budgetShort ? `${tg.protein} g protein isn't possible on ₹${S.budget}. The most you'll get is about <b>${fmt(p.totals.p)} g protein</b>${p.needCost != null ? `; ${tg.protein} g needs about <b>₹${fmt(Math.ceil(p.needCost + outSum("price")))}</b> a day` : ""}.`
+          : p.overBudget ? `Not quite enough. The cheapest plan for ${tg.protein} g protein costs <b>₹${fmt(Math.ceil(p.totals.cost))}</b>.`
+          : `Enough. Your plan will cost about <b>₹${fmt(p.totals.cost)}</b> a day.`;
+      }, 80);
+    };
+    r.addEventListener("input", upd);
+    upd();
+    $("#next").addEventListener("click", () => go(4));
+  }
+
+  const storeName = (f) => f.store === "Brand store" && f.where ? f.where.split(",")[0].trim() : f.store;
+  // Which meal(s) a food belongs to, as [meal, share of the day's amount]
+  // Which meals a food suits, best first.
+  const MEALS = ["Breakfast", "Lunch", "Snacks", "Dinner"];
+  function mealsFor(f) {
+    const c = f.cat;
+    if (c === "Soya & dal" && /sattu/i.test(f.name)) return ["Breakfast", "Lunch", "Snacks"];
+    if (["Grains & atta", "Soya & dal", "Pasta & noodles", "Chicken", "Fish & seafood", "Mutton", "Paneer & tofu", "Curd", "Ready non-veg"].includes(c)) return ["Lunch", "Dinner"];
+    if (c === "Oats & muesli") return ["Breakfast", "Snacks"];
+    if (c === "Bread") return ["Breakfast", "Lunch", "Dinner", "Snacks"];
+    if (c === "Spreads") return ["Breakfast", "Snacks", "Dinner", "Lunch"];
+    if (c === "Eggs") return ["Breakfast", "Dinner", "Lunch"];
+    if (c === "Milk") return ["Breakfast", "Dinner", "Snacks"];
+    if (c === "Cheese") return ["Breakfast", "Lunch", "Dinner"];
+    if (c === "Yogurt") return ["Snacks", "Lunch", "Breakfast", "Dinner"];
+    if (["Protein powder", "Protein shake"].includes(c)) return ["Snacks", "Breakfast"];
+    if (c === "Frozen dessert") return ["Dinner", "Snacks"];
+    return ["Snacks"];
+  }
+  // Spread the day's foods over four meals so each gets a fair share of the calories
+  // (breakfast 25%, lunch 30%, snacks 15%, dinner 30%). Mess meals fill lunch and dinner first.
+  // Big amounts of a food are split between two meals; foods sold in pieces split in whole pieces.
+  // Mess / home meals: 1 = lunch, 2 = lunch + dinner, 3 = breakfast + lunch + dinner
+  const messIn = (meal) => ({ Breakfast: S.meals >= 3 ? 1 : 0, Lunch: S.meals >= 1 ? 1 : 0, Dinner: S.meals >= 2 ? 1 : 0 }[meal] || 0);
+  function planMeals(items) {
+    const rows = { Breakfast: [], Lunch: [], Snacks: [], Dinner: [] };
+    const kcalOf = (it) => it.grams * it.food.kcal;
+    const total = items.reduce((s, it) => s + kcalOf(it), 0) + S.meals * MESS.kcal;
+    const left = { Breakfast: 0.25 * total - messIn("Breakfast") * MESS.kcal, Lunch: 0.30 * total - messIn("Lunch") * MESS.kcal, Snacks: 0.15 * total, Dinner: 0.30 * total - messIn("Dinner") * MESS.kcal };
+    const put = (meal, it, share) => { rows[meal].push({ it, share }); left[meal] -= kcalOf(it) * share; };
+    // split an item between two meals; returns the share for the first one
+    const splitShare = (it) => {
+      const u = it.food.unit;
+      if (u) { const n = Math.round(it.grams / u.g); if (n < 2) return 1; return Math.ceil(n / 2) / n; }
+      return 0.5;
+    };
+    // foods that fit fewer meals are placed first, so flexible ones can fill the gaps
+    const todo = [...items].sort((a, b) => mealsFor(a.food).length - mealsFor(b.food).length || kcalOf(b) - kcalOf(a));
+    for (const it of todo) {
+      const ok = mealsFor(it.food), k = kcalOf(it);
+      // main dishes go half to lunch, half to dinner (unless a mess meal already covers that meal)
+      if (ok[0] === "Lunch" && ok[1] === "Dinner") {
+        const lunchFull = left.Lunch <= 0, dinFull = left.Dinner <= 0;
+        if (lunchFull !== dinFull || k < 200 || it.grams < 40) { put(left.Lunch >= left.Dinner ? "Lunch" : "Dinner", it, 1); continue; }
+        const a = splitShare(it); put("Lunch", it, a); if (a < 1) put("Dinner", it, 1 - a); continue;
+      }
+      // otherwise: the allowed meal with the most room (earlier = preferred on ties)
+      const byRoom = ok.map((m, i) => ({ m, room: left[m] - i * 40 })).sort((x, y) => y.room - x.room);
+      const best = byRoom[0], second = byRoom[1];
+      if (second && k > 250 && (k > 350 || k > Math.max(best.room, 0) * 1.25)) {
+        const a = splitShare(it);
+        if (a < 1) { put(best.m, it, a); put(second.m, it, 1 - a); continue; }
+      }
+      put(best.m, it, 1);
+    }
+    // Peanut butter and other spreads go in the meal that has the bread
+    const breadMeals = MEALS.filter(m => rows[m].some(r => r.it.food.cat === "Bread"));
+    if (breadMeals.length) for (const m of MEALS) {
+      if (breadMeals.includes(m)) continue;
+      const moving = rows[m].filter(r => r.it.food.cat === "Spreads");
+      if (!moving.length) continue;
+      rows[m] = rows[m].filter(r => r.it.food.cat !== "Spreads");
+      for (const r of moving) {
+        const same = rows[breadMeals[0]].find(x => x.it === r.it);
+        if (same) same.share += r.share; else rows[breadMeals[0]].push(r);
+      }
+    }
+    for (const m of MEALS) rows[m].sort((x, y) => y.it.grams * y.share * y.it.food.p - x.it.grams * x.share * x.it.food.p);
+    return rows;
+  }
+
+  // Result
+  // Basic vs Pro. There's no way to pay yet, so everyone is on Basic and Pro features show a preview
+  // that asks whether they'd pay. Basic: today's cheapest plan (with swaps, readymade picks and price fixes).
+  const PRO_PRICE = 99;   // the price we ask about; each answer is stored with it
+  const isPro = () => TESTING && window.__mbpPro === true;   // tests can switch Pro on; real users can't yet
+  const deviceId = () => {
+    let d = ls("mbp_device");
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(d || "")) {
+      const b = new Uint8Array(16); crypto.getRandomValues(b); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
+      const h = [...b].map(x => x.toString(16).padStart(2, "0")).join("");
+      d = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`; lsSet("mbp_device", d);
+    }
+    return d;
+  };
+  const PRO_HEAD = { week: "Every day of the week is part of Pro", shop: "The weekly shopping list is part of Pro", eatout: "Restaurant orders are part of Pro" };
+  // Launch metrics: each event is sent at most once a day per device, with no plan data
+  function track(event) {
+    const day = localDay(); let seen = {};
+    try { seen = JSON.parse(ls("mbp_seen") || "{}"); } catch (e) {}
+    if (seen.d !== day) seen = { d: day, e: [] };
+    if (!Array.isArray(seen.e) || seen.e.includes(event)) return;
+    seen.e.push(event); lsSet("mbp_seen", JSON.stringify(seen));
+    cloud.usage(deviceId(), event).catch(() => {   // offline: try again next time
+      try { const s2 = JSON.parse(ls("mbp_seen") || "{}"); if (s2.d === day) { s2.e = (s2.e || []).filter(x => x !== event); lsSet("mbp_seen", JSON.stringify(s2)); } } catch (e) {}
+    });
+  }
+  function proCard(feature) {
+    track("pro");
+    return `<div class="pro-card"><div class="pro-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/><path d="M19 15.5l.9 2.3 2.3.9-2.3.9-.9 2.3-.9-2.3-2.3-.9 2.3-.9z" opacity=".75"/></svg></div>
+      <h3><span>Pro</span> coming soon</h3></div>`;
+  }
+  function wirePro(root, redraw) {
+    root.querySelectorAll("[data-pro]").forEach(b => b.addEventListener("click", () => {
+      const a = b.dataset.pro, f = b.dataset.feature;
+      lsSet("mbp_pro", JSON.stringify({ a, f, p: PRO_PRICE, d: localDay() }));
+      cloud.proInterest(deviceId(), a, f, PRO_PRICE).catch(() => {});   // best effort: the answer is a signal, not data the app needs
+      redraw();
+    }));
+    const again = root.querySelector("#proAgain"); if (again) again.addEventListener("click", () => { lsSet("mbp_pro", null); redraw(); });
+  }
+  let selDay = 0, priceEdit = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
+  function result() {
+    const t = targets();
+    const o = opts();
+    const W = planWeek(FOODS, o, solver);
+    // Two day-plans alternate through the week; which one is "today" follows the calendar
+    const parity = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5) % 2;
+    const planFor = (i) => (parity + i) % 2 === 0 ? W.A : W.B;
+    const p = W.ok ? planFor(0) : W.A;
+    track("plan");
+    if (!W.ok) {
+      screen.innerHTML = `<section class="result"><h1>No plan fits.</h1>
+        <p class="q-sub" style="margin:0">Try a lower protein target, or say you can cook to unlock more foods.</p>
+        <button type="button" class="ghost" id="restart">Change my answers</button></section>`;
+      $("#restart").addEventListener("click", () => go(0));
+      return;
+    }
+    const T = Object.assign({}, p.totals);
+    // Is anything in today's numbers an estimate? (prices from another city or date, mess meals, ~ restaurant prices)
+    const costEst = p.items.some(it => priceEst(it.food)) || outItems().some(o => { const q = priceOf(o.r); return q && !q.exact && !o.price; });
+    const macroEst = S.meals > 0 || p.items.some(it => it.food.check) || outItems().some(o => o.r.est || o.r.chain === "Burger King");
+    T.cost += outSum("price");
+    const C = 2 * Math.PI * 56;
+    const frac = Math.min(1, T.p / t.protein);
+    const cut = S.exclude.length;
+
+    screen.innerHTML = `<section class="result">
+      <div class="r-side">
+      <div class="hero">
+        <div class="ring" role="img" aria-label="${fmt(T.p)} of ${t.protein} grams protein">
+          <svg viewBox="0 0 132 132"><circle class="track" cx="66" cy="66" r="56"></circle>
+          <circle class="prog" cx="66" cy="66" r="56" stroke-dasharray="${C}" stroke-dashoffset="${C}"></circle></svg>
+          <div class="mid"><b>${fmt(T.p)}g</b><span>of ${t.protein}g</span></div>
+        </div>
+        <div>
+          <h2>${S.name ? `${esc(S.name)}, this costs you` : "Costs you"}</h2>
+          <div class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}<small> / day</small></div>
+          <div class="stats"><span><b>${fmt(T.kcal)}</b> kcal</span><span><b>${fmt(T.c)}g</b> carbs</span><span><b>${fmt(T.f)}g</b> fat</span></div>
+          ${costEst || macroEst ? `<p class="est-line">≈ Estimate: ${[costEst ? `prices are from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
+        </div>
+      </div>
+      <div class="tune" id="tune">
+        <div class="tune-row">
+          <div class="tune-head"><span>Budget</span><b id="tb">₹${S.budget}</b></div>
+          <input type="range" id="tBudget" min="40" max="500" step="10" value="${S.budget}" aria-label="Daily budget">
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>Plan style</span></div>
+          <div class="seg3" role="radiogroup" aria-label="Plan style">
+            ${[["cheap", "Cheapest", "Lowest cost"], ["balanced", "Balanced", "More variety"], ["tasty", "Tasty", "Dairy, eggs, chicken"]].map(([k, t, d]) =>
+              `<button type="button" data-style="${k}" aria-pressed="${(S.style || "balanced") === k}"><b>${t}</b><span>${d}</span></button>`).join("")}
+          </div>
+        </div>
+        <div class="tune-row">
+          <div class="tune-head"><span>Your targets</span>${S.myP != null || S.myK != null ? `<button type="button" class="link" id="useRec2">Use suggested (${rec().protein} g · ${fmt(rec().kcal)} kcal)</button>` : `<span>Suggested for you</span>`}</div>
+          <div id="tgts"><div class="stps2">${stepper("p", t.protein)}${stepper("k", t.kcal)}</div>
+          <div class="tune-head sub"><span>Carbs and fat</span>${t.carbs != null || t.fat != null ? `<button type="button" class="link" id="macAuto">Set both to auto</button>` : `<span>Grey = auto, we pick</span>`}</div>
+          <div class="stps2">${stepper("c", t.carbs, Math.round(T.c / 5) * 5)}${stepper("f", t.fat, Math.round(T.f / 5) * 5)}</div></div>
+          ${(() => { if (t.carbs == null || t.fat == null) return ""; const k = 4 * t.protein + 4 * t.carbs + 9 * t.fat;
+            return Math.abs(k - t.kcal) > t.kcal * 0.07 ? `<p class="hint-sm">Your protein, carbs and fat add up to ${fmt(k)} kcal, not ${fmt(t.kcal)}. <button type="button" class="link" id="fixKcal" data-v="${Math.round(k / 50) * 50}">Use ${fmt(Math.round(k / 50) * 50)} kcal</button></p>` : ""; })()}
+        </div>
+      </div>
+
+      ${S.kitchen === false ? `<div class="room">
+        <div class="tune-head"><span>${S.place === "pg" ? "PG room" : "Hostel room"}</span><span>${esc(gearText())}</span></div>
+        ${gearPills()}
+      </div>` : ""}
+
+      ${p.styleRelaxed && !p.budgetShort ? (() => { const nm = p.styleRelaxed === "tasty" ? "Tasty" : "Balanced";
+        const need = p.styleNeed != null ? Math.ceil((p.styleNeed + outSum("price")) / 10) * 10 : null;
+        return `<div class="note">${need ? `A ${nm} plan for ${t.protein} g protein costs about ₹${need} a day, more than your ₹${S.budget}.` : `A ${nm} plan can't reach these targets.`} So you're seeing the cheapest plan, which fits ₹${S.budget}.
+          <div class="fix">
+            ${need && need <= 500 ? `<button type="button" class="btn-sm" id="fixStyleBudget" data-v="${need}">Raise budget to ₹${need} for ${nm}</button>` : ""}
+            <button type="button" class="btn-sm ghosty" id="keepBudget">Keep ₹${S.budget}, use Cheapest</button>
+          </div></div>`; })() : ""}
+            ${p.budgetShort ? `<div class="note short">
+          <b>${t.protein} g protein isn't possible on ₹${S.budget} a day.</b>
+          ${p.budgetSoft ? (t.carbs != null && t.fat != null && Math.abs(4 * t.protein + 4 * t.carbs + 9 * t.fat - t.kcal) > t.kcal * 0.07
+              ? `Your protein, carbs and fat also don't add up to ${fmt(t.kcal)} kcal (fix below). Closest plan for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`
+              : `₹${S.budget} can't cover ${fmt(t.kcal)} kcal${t.carbs != null || t.fat != null ? " with your carbs and fat" : ""} either. This is the most you can get for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`)
+            : `The most you can get for ₹${S.budget} is <b>${Math.round(T.p)} g protein</b> in ${fmt(T.kcal)} kcal (${fmt(T.c)} g carbs, ${fmt(T.f)} g fat). That's the plan below.`}
+          <div class="fix">
+            ${p.needCost != null ? `<button type="button" class="btn-sm" id="fixBudget" data-v="${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)}">Raise budget to ₹${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)} for ${t.protein} g</button>` : ""}
+            ${p.budgetSoft ? "" : `<button type="button" class="btn-sm ghosty" id="fixProtein" data-v="${Math.max(30, Math.floor(T.p / 5) * 5)}">Keep ₹${S.budget}: set protein to ${Math.max(30, Math.floor(T.p / 5) * 5)} g</button>`}
+          </div></div>` : ""}
+      ${p.closest && t.carbs != null && t.fat != null && Math.abs(4 * t.protein + 4 * t.carbs + 9 * t.fat - t.kcal) > t.kcal * 0.07
+        ? `<div class="note">${t.protein} g protein, ${t.carbs} g carbs and ${t.fat} g fat add up to about ${fmt(4 * t.protein + 4 * t.carbs + 9 * t.fat)} kcal, not ${fmt(t.kcal)}. We kept your protein, carbs and fat as close as we could. Use the “Use … kcal” button under Carbs and fat to match, or set carbs and fat back to auto.</div>`
+        : p.closest ? `<div class="note">${t.protein} g protein in ${fmt(t.kcal)} kcal${t.carbs != null ? `, ${t.carbs} g carbs` : ""}${t.fat != null ? `, ${t.fat} g fat` : ""} isn't possible with the foods ${S.kitchen === false ? "you can make in your room" : "we have"}${p.overBudget ? " and this budget" : ""}. This is the closest plan: ${fmt(T.p)} g protein, ${fmt(T.kcal)} kcal. Try more calories or a little less protein.</div>`
+        : p.overBudget ? `<div class="note">₹${S.budget} isn't enough for ${t.protein} g protein and ${fmt(t.kcal)} kcal${outSum("price") ? " with what you're ordering" : ""}. This is the cheapest plan that hits your targets. Lower a target or raise the budget below.</div>` : ""}
+
+      </div>
+      <div class="r-main">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="day" aria-selected="${tab === "day"}">Today</button>
+        <button type="button" role="tab" data-tab="shop" aria-selected="${tab === "shop"}">Shopping${isPro() ? "" : ` <span class="pro-badge">Pro</span>`}</button>
+        <button type="button" role="tab" data-tab="out" aria-selected="${tab === "out"}">Order in</button>
+      </div>
+
+      <div id="panel"></div>
+      </div>
+      <div class="r-more">
+
+      <div class="loc">
+        <span>Location: <b>${S.city ? esc(S.city) + (S.area ? ", " + esc(S.area) : "") : "not set"}</b></span>
+        <button type="button" class="link" id="locChange">${S.city ? "Change" : "Add"}</button>
+        <div class="loc-edit" id="locEdit" hidden>
+          <select id="lCity" aria-label="City"><option value="">Choose your city</option>${CITIES.map(c => `<option${S.city === c ? " selected" : ""}>${c}</option>`).join("")}</select>
+          <input id="lArea" placeholder="Area or PIN code" value="${esc(S.area || "")}" aria-label="Area or PIN code">
+          <button type="button" class="btn-sm" id="locSave">Save</button>
+        </div>
+      </div>
+      <button type="button" class="ghost" id="restart">Change my answers</button>
+      ${S.name || currentUser ? `<div class="acct">
+        ${S.name ? `<button type="button" id="logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Log out</button>` : ""}
+        ${currentUser ? `<button type="button" class="danger" id="deleteAcct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete my account</button>` : ""}
+      </div>` : ""}
+      <div class="backup">
+        <button type="button" class="link" id="bkOpen">Back up or restore my data</button>
+        <div id="bkBox" hidden>
+          <p class="hint-sm">${currentUser ? "Your plan is saved to your account and syncs to your other devices. This code is an extra copy: keep it somewhere (notes, WhatsApp to yourself) and paste it here to get this plan back." : "Without an account, your plan is saved in this browser only. Copy this code and keep it somewhere (notes, WhatsApp to yourself). Paste it here on any phone to get everything back."}</p>
+          <textarea id="bkCode" rows="3" readonly aria-label="Backup code"></textarea>
+          <div class="fix"><button type="button" class="btn-sm" id="bkCopy">Copy code</button></div>
+          <textarea id="bkIn" rows="3" placeholder="Paste a backup code to restore" aria-label="Paste a backup code"></textarea>
+          <div class="fix"><button type="button" class="btn-sm ghosty" id="bkRestore">Restore</button></div>
+          <p class="err" id="bkErr" role="alert"></p>
+        </div>
+      </div>
+      <details class="foot">
+        <summary>About prices and data</summary>
+        <p>Anything marked “≈” or “est.” is an estimate. Tap or hover the “est.” tag to see why.</p>
+        <p>Prices are from Blinkit and Zepto in Gurugram on 3 Oct 2026. Offers change daily, so yours may differ by a few rupees. Tap a price to use what you see.</p>
+        <p>Non-veg readymade items are Licious heat-and-eat and ready-to-eat products. Macros come from their pack labels; prices are Licious Bangalore prices.</p>
+        <p>Restaurant macros come from each chain's official India nutrition information: McDonald's North &amp; East (Dec 2025) and West &amp; South (2024), Domino's India, KFC India, Pizza Hut India (2022) and Burger King India (2020, the latest it published). You see the McDonald's menu for your region. Restaurant prices were read from each chain's own website on 15 Oct 2026, for a Greater Noida store (Delhi NCR) — except McDonald's West &amp; South, read for Mumbai, because McDonald's North &amp; East shows prices only in its app. They're the item price only, before delivery fees and offers. In other cities they're marked “~” because your price may differ. Pizza Hut prices are for Personal Pan size only. Domino's medium pizzas are listed as half a pizza (3 slices) at half the menu price. Items with no price weren't on the chain's online menu when checked; add what you pay and it's saved for you.</p>
+        <p>Suggested targets use the Mifflin-St Jeor formula for calories you burn at rest, times your activity level, then 20% less to lose fat or 10% more to build muscle. Protein is 1.8–2.0 g per kg when building or cutting (within the 1.4–2.0 g/kg the International Society of Sports Nutrition suggests for active people, a little higher when cutting) and 1.0–1.6 g/kg to maintain; above a BMI of 25 it's counted on a healthy weight for your height. Fat is 25% of calories, carbs the rest. They're estimates for healthy adults, not medical advice; set your own anytime. Hostel plans, and PG plans without a kitchen, only use food you can make with what's in your room: eggs need a kettle or microwave, heat-and-eat packs a microwave, and chilled food a fridge unless it's a single cup or bottle you finish that day. A mess meal counts as about 15 g protein, 650 kcal, 95 g carbs and 22 g fat. Carbs and fat targets allow ±10%. Eggs count as 50 g each.</p>
+        <p>Your plan alternates between two days so you're not eating the same food every day. Cups, bottles, eggs and bars are always whole, and fresh food is planned so it's finished before it goes off.</p>
+      </details>
+      <p class="fine-note legal"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
+      </div>
+    </section>`;
+
+    requestAnimationFrame(() => { $(".prog").style.strokeDashoffset = C * (1 - frac); });
+
+    const panel = $("#panel");
+    // Fix a pack price to what the shop shows (free on every plan): used in Today and Shopping
+    const priceEditor = (f) => { const mp = myPrice(f); return `<li class="pedit"><div>
+            <label>Price you see for 1 × ${esc(f.pack)}: ₹ <input id="pIn" type="number" inputmode="decimal" min="1" max="20000" value="${mp ? mp.p : f.price}"></label>
+            <p class="hint-sm">Our price: ₹${fmt(f.price)} on ${esc(storeName(f))}, checked ${PRICE_DATE}. Your price is used for your plan only.</p>
+            <p class="err" id="pErr" role="alert"></p>
+            <div class="fix"><button type="button" class="btn-sm" id="pSave">Save</button>
+              ${mp ? `<button type="button" class="btn-sm ghosty" id="pReset">Use app price</button>` : ""}
+              <button type="button" class="btn-sm ghosty" id="pCancel">Cancel</button></div></div></li>`; };
+    const wirePriceEdit = (redraw) => {
+      panel.querySelectorAll("[data-edit]").forEach(b => b.addEventListener("click", (e) => {
+        e.stopPropagation(); priceEdit = priceEdit === +b.dataset.edit ? null : +b.dataset.edit; redraw();
+        const inp = $("#pIn"); if (inp) inp.focus();
+      }));
+      const ps = $("#pSave");
+      if (!ps) return;
+      const f = FOODS[priceEdit];
+      let confirmBig = false;
+      const saveIt = () => {
+        const v = +$("#pIn").value;
+        if (!(v >= 1)) { $("#pErr").textContent = "Enter the price of one pack, in rupees."; return; }
+        if (!confirmBig && (v > f.price * 3 || v < f.price / 3)) {
+          confirmBig = true; ps.textContent = "Save anyway";
+          $("#pErr").textContent = `₹${fmt(v)} is very different from ₹${fmt(f.price)}. Check it's the price of 1 × ${f.pack}.`; return;
+        }
+        S.myPrices = Object.assign({}, S.myPrices, { [f.key]: { p: v, d: localDay() } }); priceEdit = null; save(); result();
+      };
+      ps.addEventListener("click", saveIt);
+      $("#pIn").addEventListener("keydown", e => { if (e.key === "Enter") saveIt(); });
+      const pr = $("#pReset"); if (pr) pr.addEventListener("click", () => { const m = Object.assign({}, S.myPrices); delete m[f.key]; S.myPrices = m; priceEdit = null; save(); result(); });
+      $("#pCancel").addEventListener("click", () => { priceEdit = null; redraw(); });
+    };
+    const drawDay = () => {
+      const today = localDay();
+      S.ate = S.ate && S.ate[today] ? { [today]: S.ate[today] } : { [today]: [] };
+      const ate = new Set(S.ate[today]);
+      const dp = planFor(selDay), isToday = selDay === 0;
+      const rows = planMeals(dp.items);
+      const dayName = (i) => i === 0 ? "Today" : i === 1 ? "Tmrw" : new Date(Date.now() + i * 864e5).toLocaleDateString("en-IN", { weekday: "short" });
+      const messRow = (meal, n) => n ? `<li class="mess${ate.has(meal + ":mess") ? " ate" : ""}">
+          ${isToday ? `<button type="button" class="tick-btn" data-ate="${meal}:mess" aria-pressed="${ate.has(meal + ":mess")}" aria-label="Mark mess meal as eaten"></button>` : `<span class="tick-sp"></span>`}
+          <div class="qty">${n}×<small>meal</small></div>
+          <div class="fname"><div class="n">Mess or home food</div><div class="m"><span class="p">≈${n * MESS.p}g protein</span> ${estTag("A typical mess thali, roughly: 15 g protein, 650 kcal, 95 g carbs, 22 g fat. Yours may be more or less.")} · already eating</div></div><span></span></li>` : "";
+      const edShown = new Set();
+      const foodRow = (meal, { it, share }) => {
+        const f = it.food, key = meal + ":" + f.id, part = { food: f, grams: it.grams * share };
+        const ed = isToday && priceEdit === f.id && !edShown.has(f.id); if (ed) edShown.add(f.id);
+        return `<li class="${ate.has(key) ? "ate" : ""}">
+          ${isToday ? `<button type="button" class="tick-btn" data-ate="${key}" aria-pressed="${ate.has(key)}" aria-label="Mark ${esc(f.name)} as eaten"></button>` : `<span class="tick-sp"></span>`}
+          <div class="qty">${qty(part)}</div>
+          <div class="fname"><div class="n">${esc(f.name)}</div>
+            <div class="m"><span class="p">${fmt(part.grams * f.p)}g protein</span>${f.check ? " " + estTag(MACRO_WHY) : ""} · ${isToday ? `<button type="button" class="pe" data-edit="${f.id}" aria-label="Change the price of ${esc(f.name)}">${priceEst(f) ? "≈" : ""}₹${fmt(it.cost * share)}</button>` : `${priceEst(f) ? "≈" : ""}₹${fmt(it.cost * share)}`}${priceEst(f) ? " " + estTag(priceWhy(f)) : ""}${myPrice(f) ? " · your price" : ""} · ${esc(storeName(f))}${it.picked ? " · your pick" : ""}</div>
+            ${S.kitchen === false ? `<div class="how">${esc(howTo(f, S.gear))}</div>` : ""}</div>
+          ${it.picked ? `<button type="button" class="swap" data-unpick="${f.id}" aria-label="Remove ${esc(f.name)}">Remove</button>`
+            : `<button type="button" class="swap" data-id="${f.id}" aria-label="Swap out ${esc(f.name)}">Swap</button>`}
+        </li>${ed ? priceEditor(f) : ""}`;
+      };
+      const outs = outItems().map((o, i) => `<li class="out${ate.has("out:" + i) ? " ate" : ""}">
+        <button type="button" class="tick-btn" data-ate="out:${i}" aria-pressed="${ate.has("out:" + i)}" aria-label="Mark ${esc(o.r.name)} as eaten"></button>
+        <div class="qty">${(o.frac || 1) === 1 ? "1" : slicesOf(o.r) ? Math.round((o.frac || 1) * slicesOf(o.r)) : "½"}<small>${(o.frac || 1) === 1 ? "order" : slicesOf(o.r) ? "slices" : "order"}</small></div>
+        <div class="fname"><div class="n">${esc(o.r.name)}</div>
+          <div class="m"><span class="p">${fmt(o.r.p * (o.frac || 1))}g protein</span> · ${fmt(o.r.kcal * (o.frac || 1))} kcal · ${esc(o.r.chain)}</div>
+          ${slicesOf(o.r) ? `<div class="grams">${[[1, "Whole"], [0.5, "Half"], [2 / slicesOf(o.r), "2 slices"], [1 / slicesOf(o.r), "1 slice"]].map(([fr, lb]) =>
+            `<button type="button" class="pill" data-frac="${fr}" data-fi="${i}" aria-pressed="${Math.abs((o.frac || 1) - fr) < 1e-6}">${lb}</button>`).join("")}</div>` : ""}
+          <label class="price">₹ <input type="number" inputmode="numeric" min="0" max="2000" placeholder="price" value="${o.price ?? ""}" data-i="${i}" aria-label="What you pay for ${esc(o.r.name)}">${(o.frac || 1) < 1 ? ` <span>whole order · you count ₹${fmt((+o.price || 0) * o.frac)}</span>` : ""}</label></div>
+        <button type="button" class="swap" data-out="${i}" aria-label="Remove ${esc(o.r.name)}">Remove</button></li>`).join("");
+      // protein eaten so far today
+      let eaten = 0;
+      for (const [meal, list] of Object.entries(rows)) for (const r of list) if (ate.has(meal + ":" + r.it.food.id)) eaten += r.it.grams * r.share * r.it.food.p;
+      for (const m of ["Breakfast", "Lunch", "Dinner"]) if (ate.has(m + ":mess")) eaten += messIn(m) * MESS.p;
+      outItems().forEach((o, i) => { if (ate.has("out:" + i)) eaten += o.r.p; });
+      const sec = (meal) => {
+        const mess = messRow(meal, messIn(meal));
+        const body = rows[meal].map(r => foodRow(meal, r)).join("") + mess;
+        const n = messIn(meal);
+        const mp = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.p, 0) + n * MESS.p;
+        const mk = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.kcal, 0) + n * MESS.kcal;
+        return body ? `<h3 class="meal">${meal}<span>${fmt(mp)} g protein · ${fmt(mk)} kcal</span></h3><ul class="foods">${body}</ul>` : "";
+      };
+      const daysRow = `<div class="days" role="radiogroup" aria-label="Day of the week">${[0, 1, 2, 3, 4, 5, 6].map(i =>
+          `<button type="button" role="radio" class="dchip${i && !isPro() ? " locked" : ""}" data-day="${i}" aria-checked="${i === selDay}">${dayName(i)}${i && !isPro() ? `<span class="sr-only"> (Pro)</span>` : ""}</button>`).join("")}</div>`;
+      if (!isToday && !isPro()) {
+        panel.innerHTML = daysRow + proCard("week");
+        panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
+        wirePro(panel, drawDay); return;
+      }
+      panel.innerHTML = `${daysRow}
+        ${!isPro() ? `<p class="hint-sm">Today's cheapest plan. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
+          : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
+        ${isToday ? `<div class="eaten"><span>Eaten today</span><b>${fmt(eaten)} <small>of ${targets().protein} g protein</small></b>
+          <div class="bar"><i style="width:${Math.min(100, eaten / targets().protein * 100)}%"></i></div></div>` : ""}
+        ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
+        ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
+        ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
+        ${cut ? `<div class="undo"><span>${cut} food${cut > 1 ? "s" : ""} swapped out</span><button type="button" class="link" id="undo">Undo all</button></div>` : ""}`;
+      panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
+      wirePriceEdit(drawDay);
+      panel.querySelectorAll("[data-ate]").forEach(b => b.addEventListener("click", () => {
+        const k = b.dataset.ate, list = S.ate[today];
+        if (!list.includes(k)) track("tick");
+        const i = list.indexOf(k); if (i >= 0) list.splice(i, 1); else list.push(k);
+        save(); drawDay();
+      }));
+      panel.querySelectorAll(".swap[data-id]").forEach(b => b.addEventListener("click", () => {
+        S.exclude.push(+b.dataset.id); save(); result();
+      }));
+      panel.querySelectorAll("[data-unpick]").forEach(b => b.addEventListener("click", () => {
+        const f = FOODS[+b.dataset.unpick]; S.rte = (S.rte || []).filter(x => x.link !== f.link); save(); result();
+      }));
+      panel.querySelectorAll("[data-frac]").forEach(b => b.addEventListener("click", () => {
+        S.out[+b.dataset.fi].frac = +b.dataset.frac; save(); result();
+      }));
+      panel.querySelectorAll("[data-out]").forEach(b => b.addEventListener("click", () => {
+        S.out.splice(+b.dataset.out, 1); save(); result();
+      }));
+      panel.querySelectorAll(".price input").forEach(inp => inp.addEventListener("change", () => {
+        S.out[+inp.dataset.i].price = inp.value === "" ? null : Math.max(0, +inp.value); save(); result();
+      }));
+      const u = $("#undo"); if (u) u.addEventListener("click", () => { S.exclude = []; save(); result(); });
+    };
+    const drawShop = () => {
+      if (!isPro()) { panel.innerHTML = proCard("shop"); wirePro(panel, drawShop); return; }
+      const n = S.people || 1;
+      const today = localDay();
+      const daysAgo = (d) => Math.round((Date.parse(today) - Date.parse(d)) / 864e5);
+      const week = W.week.map(w => {
+        const grams = w.grams * n, packs = Math.max(1, Math.ceil(grams / w.food.packQty - 1e-6));
+        const perDay = grams / 7, fresh = needs(w.food).includes("fridge") || w.food.cat === "Bread";
+        return { food: w.food, packs, packPrice: w.packPrice, cost: packs * w.packPrice, eaten: w.eatenCost * n,
+          lasts: packs * w.food.packQty / perDay, firstLasts: w.food.packQty / perDay, fresh };
+      });
+      const total = week.reduce((s, w) => s + w.cost, 0);
+      const eatenCost = week.reduce((s, w) => s + w.eaten, 0);
+      const weekBudget = 7 * S.budget * n;
+      const left = Math.max(0, total - eatenCost);
+      const line = (w) => {
+        const f = w.food, mp = myPrice(f), sub = [];
+        sub.push(`${w.packs} × ${esc(f.pack)} · ${esc(storeName(f))}`);
+        // Fresh food: buy one pack at a time so it doesn't go off
+        if (w.fresh && w.packs > 1) sub.push(`buy 1 now, the next around day ${Math.max(2, Math.floor(w.firstLasts) + 1)}`);
+        else if (w.lasts > 9) sub.push(`lasts about ${w.lasts > 60 ? "2 months+" : Math.round(w.lasts) + " days"}`);
+        if (S.kitchen === false && !(S.gear || {}).fridge && needs(f).includes("fridge")) sub.push(`<b class="fresh">buy on the day you eat it</b>`);
+        const stale = mp && daysAgo(mp.d) > 30;
+        const editing = priceEdit === f.id;
+        return `<li tabindex="0" role="checkbox" aria-checked="false" data-sid="${f.id}">
+          <span class="box"></span>
+          <span class="sn">${esc(f.name)}<small>${sub.join(" · ")}</small>
+            ${mp ? `<small class="mine">Your price ₹${fmt(mp.p)} a pack${stale ? ` · from ${daysAgo(mp.d)} days ago, still right?` : ""}</small>` : ""}</span>
+          <button type="button" class="sp" data-edit="${f.id}" aria-label="Change the price of ${esc(f.name)}">${priceEst(f) ? "≈" : ""}₹${fmt(w.cost)}<i>${mp ? "your price" : priceEst(f) ? "est. · edit" : "edit"}</i></button></li>
+          ${editing ? priceEditor(f) : ""}`;
+      };
+      panel.innerHTML = `<div class="people"><span>Buying for</span>
+          <div class="pills small">${[1, 2, 3, 4].map(k => `<button type="button" class="pill" data-people="${k}" aria-pressed="${n === k}">${k === 1 ? "Just me" : k}</button>`).join("")}</div>${n > 1 ? "<span>people</span>" : ""}</div>
+        ${n > 1 ? `<p class="hint-sm">Everyone eats the same plan. Bigger packs make it cheaper per person.</p>` : ""}
+        <p class="hint-sm">Tap a price to use what Blinkit or Zepto shows you today.</p>
+        <ul class="shop">${week.map(line).join("")}</ul>
+        <div class="total"><span>First week's shop${n > 1 ? ` · ₹${fmt(total / n)} each` : ""}</span><b>₹${fmt(total)}</b></div>
+        <div class="split"><span>Eaten this week</span><b>₹${fmt(eatenCost)}</b><span>Left in your cupboard for next week</span><b>₹${fmt(left)}</b></div>
+        ${total > weekBudget + 1 ? `<div class="note week-note">
+          <b>This first shop is more than your weekly budget of ₹${fmt(weekBudget)}</b> (7 × ₹${S.budget}${n > 1 ? ` × ${n} people` : ""}). Packs come in fixed sizes, so ₹${fmt(left)} of it is food that lasts into next week. Next week's shop will be smaller.</div>` : ""}
+        <button type="button" class="ghost" id="copy">Copy list</button>`;
+      panel.querySelectorAll("[data-people]").forEach(b => b.addEventListener("click", () => { S.people = +b.dataset.people; save(); drawShop(); }));
+      panel.querySelectorAll(".shop li[data-sid]").forEach(li => {
+        const flip = () => { li.classList.toggle("done"); li.setAttribute("aria-checked", li.classList.contains("done")); };
+        li.addEventListener("click", (e) => { if (!e.target.closest(".sp")) flip(); });
+        li.addEventListener("keydown", e => { if (e.target === li && (e.key === " " || e.key === "Enter")) { e.preventDefault(); flip(); } });
+      });
+      wirePriceEdit(drawShop);
+      $("#copy").addEventListener("click", (e) => {
+        const text = (n > 1 ? `Weekly shop for ${n} people\n` : "") + week.map(w => `${w.food.name} (${w.food.pack}) x${w.packs} - ₹${fmt(w.cost)}`).join("\n") + `\nTotal: ₹${fmt(total)}`;
+        const btn = e.currentTarget;
+        const done = (m) => { btn.textContent = m; setTimeout(() => btn.textContent = "Copy list", 2000); };
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done("Copied"), () => done("Couldn't copy here"));
+        else done("Couldn't copy here");
+      });
+    };
+    const srcSwitch = () => `<div class="src" role="radiogroup" aria-label="Source">
+        <button type="button" data-src="rest" aria-pressed="${outSrc === "rest"}">Restaurants${isPro() ? "" : ` <span class="pro-badge">Pro</span>`}</button>
+        <button type="button" data-src="lic" aria-pressed="${outSrc === "lic"}">Non-veg readymade</button></div>`;
+    const wireSrc = () => panel.querySelectorAll("[data-src]").forEach(b => b.addEventListener("click", () => { outSrc = b.dataset.src; outShow = 15; drawOut(); }));
+    const drawLicious = () => {
+      const list = FOODS.filter(f => f.cat === "Ready non-veg").sort((a, b) => a.price / a.packQty / a.p - b.price / b.packQty / b.p);
+      const picked = new Map((S.rte || []).map(x => [x.link, x.g]));
+      const blocked = S.diet !== "nonveg";
+      panel.innerHTML = srcSwitch() + `<p class="out-lede">Heat-and-eat and ready-to-eat chicken from Licious. No stove needed: heat-and-eat packs need a microwave, and all of them need a fridge unless you finish the pack the day you buy it. Add one and the rest of your day is planned around it.</p>
+        ${blocked ? `<div class="note">These are chicken products. Choose “Everything” in your answers to use them.</div>` : ""}
+        <ul class="foods">${list.map(f => `<li>
+          <div class="qty">${fmt(f.p * f.packQty)}<small>g protein / pack</small></div>
+          <div class="fname"><div class="n">${esc(f.name)}</div>
+            <div class="m">${S.city !== "Bengaluru" ? "≈" : ""}₹${fmt(f.price)}${S.city !== "Bengaluru" ? " " + estTag("Licious price in Bangalore on 4 Oct. Yours may differ.") : ""} for ${esc(f.pack)} · ${esc(f.prep || "")} · ${fmt(f.kcal * f.packQty)} kcal</div>
+            ${S.kitchen === false && needs(f).includes("microwave") && !(S.gear || {}).microwave ? `<div class="how warn">Needs a microwave</div>` : ""}
+            ${picked.has(f.link) ? `<div class="grams">${[0.5, 1].map(k => `<button type="button" class="pill" data-g="${Math.round(f.packQty * k)}" data-glink="${esc(f.link)}" aria-pressed="${picked.get(f.link) === Math.round(f.packQty * k)}">${k === 1 ? "1 pack a day" : "½ pack a day"}</button>`).join("")}</div>`
+              : ""}
+            <div class="store-name">Licious</div></div>
+          <button type="button" class="swap add${picked.has(f.link) ? " on" : ""}" data-lic="${esc(f.link)}" ${blocked ? "disabled" : ""}>${picked.has(f.link) ? "Added" : "Add"}</button></li>`).join("")}</ul>
+        <p class="foot" style="margin-top:12px">Macros are read from the nutrition label on each Licious pack. Prices are Licious Bangalore prices on 4 Oct 2026.</p>`;
+      wireSrc();
+      panel.querySelectorAll("[data-lic]").forEach(b => b.addEventListener("click", () => {
+        const link = b.dataset.lic, f = byLink.get(link);
+        S.rte = S.rte || [];
+        const i = S.rte.findIndex(x => x.link === link);
+        if (i >= 0) S.rte.splice(i, 1); else S.rte.push({ link, g: f.packQty });
+        S.exclude = S.exclude.filter(x => x !== f.id);
+        save(); result();
+      }));
+      panel.querySelectorAll("[data-g]").forEach(b => b.addEventListener("click", () => {
+        const x = (S.rte || []).find(x => x.link === b.dataset.glink); if (x) { x.g = +b.dataset.g; save(); result(); }
+      }));
+    };
+    const drawOut = () => {
+      if (outSrc === "lic") return drawLicious();
+      if (!isPro()) { panel.innerHTML = srcSwitch() + proCard("eatout"); wireSrc(); wirePro(panel, drawOut); return; }
+      const allow = { veg: ["veg"], egg: ["veg", "egg"], nonveg: ["veg", "egg", "nonveg"] }[S.diet || "nonveg"];
+      const chains = ["All", ...new Set(REST.map(r => r.chain))];
+      const reg = mcdRegion();
+      const pv = (r) => (priceOf(r) || {}).v || 0;
+      const list = REST.filter(r => allow.includes(r.diet) && (!r.region || r.region === reg) && !(r.notIn || []).includes(S.city) && (outChain === "All" || r.chain === outChain) && (!outPriced || r.prices))
+        .sort((a, b) => outSort === "ratio" ? b.p / b.kcal - a.p / a.kcal
+          : outSort === "rupee" ? (pv(b) ? b.p / pv(b) : 0) - (pv(a) ? a.p / pv(a) : 0) : b.p - a.p);
+      const added = new Set((S.out || []).map(o => o.key));
+      panel.innerHTML = srcSwitch() + `<p class="out-lede">Ordering in today? Add it here and the rest of your day is planned around it.</p>
+        <div class="pills small">${chains.map(c => `<button type="button" class="pill" data-chain="${esc(c)}" aria-pressed="${c === outChain}">${esc(c)}</button>`).join("")}</div>
+        <div class="sortrow"><span>Sort by</span>
+          <button type="button" class="link${outSort === "ratio" ? " on" : ""}" data-sort="ratio">Protein per calorie</button>
+          <button type="button" class="link${outSort === "rupee" ? " on" : ""}" data-sort="rupee">Protein per ₹</button>
+          <button type="button" class="link${outSort === "p" ? " on" : ""}" data-sort="p">Most protein</button></div>
+        <label class="check-sm"><input type="checkbox" id="onlyPriced" ${outPriced ? "checked" : ""}> Only items with a price</label>
+        <ul class="foods">${list.slice(0, outShow).map(r => `<li>
+          <div class="qty">${fmt(r.p)}<small>g protein</small></div>
+          <div class="fname"><div class="n">${esc(r.name)}</div>
+            <div class="m">${(() => { const q = priceOf(r); return !q ? `<b class="rp">price n/a</b>` : q.exact ? `<b class="rp">₹${fmt(q.v)}</b>` : `<b class="rp" title="${esc(q.from)} price">≈₹${fmt(q.v)}</b> ${estTag(q.from + " price. We didn't find this item in your city.")}`; })()}${r.chain === "Pizza Hut" && /\((Personal|Medium|Large)\)/.test(r.name) ? " " + estTag("Pizza Hut price for this size, taken as pan crust. Other crusts cost a bit more.") : ""} · ${esc(r.chain)} · ${fmt(r.kcal)} kcal${r.est ? " " + estTag(r.est) : r.chain === "Burger King" ? " " + estTag("Burger King India's latest nutrition data is from 2020. The recipe may have changed.") : ""} · ${r.c == null ? "carbs not published" : fmt(r.c) + "g carbs"} · ${r.f == null ? "" : fmt(r.f) + "g fat"}</div>
+            ${slicesOf(r) ? `<div class="m">${slicesOf(r)} slices · ${fmt(r.p / slicesOf(r))} g protein and ${fmt(r.kcal / slicesOf(r))} kcal a slice</div>` : ""}
+            ${CHAIN_SITE[r.chain] ? `<a class="find" href="${CHAIN_SITE[r.chain]}" target="_blank" rel="noopener">Order from ${esc(r.chain)}</a>` : ""}</div>
+          <button type="button" class="swap add${added.has(restKey(r)) ? " on" : ""}" data-add="${r.id}">${added.has(restKey(r)) ? "Added" : "Add"}</button></li>`).join("")}</ul>
+        ${list.length ? "" : `<p class="hint-sm">Nothing here. Untick “Only items with a price” to see items without prices. You can add your own price to any item.</p>`}
+        ${list.length > outShow ? `<button type="button" class="ghost" id="more">Show more (${list.length - outShow})</button>` : ""}`;
+      wireSrc();
+      panel.querySelectorAll("[data-chain]").forEach(b => b.addEventListener("click", () => { outChain = b.dataset.chain; outShow = 15; drawOut(); }));
+      panel.querySelectorAll("[data-sort]").forEach(b => b.addEventListener("click", () => { outSort = b.dataset.sort; drawOut(); }));
+      const m = $("#more"); if (m) m.addEventListener("click", () => { outShow += 15; drawOut(); });
+      const op = $("#onlyPriced"); if (op) op.addEventListener("change", () => { outPriced = op.checked; outShow = 15; drawOut(); });
+      panel.querySelectorAll("[data-add]").forEach(b => b.addEventListener("click", () => {
+        const r = REST[+b.dataset.add], key = restKey(r);
+        S.out = (S.out || []).filter(o => o.key);   // drop orders saved by an older version
+        const i = S.out.findIndex(o => o.key === key);
+        if (i >= 0) S.out.splice(i, 1); else S.out.push({ key, price: (priceOf(r) || {}).v || null });
+        save(); result();
+      }));
+    };
+    const draw = () => ({ day: drawDay, shop: drawShop, out: drawOut }[tab])();
+    draw();
+
+    screen.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => {
+      tab = b.dataset.tab;
+      screen.querySelectorAll("[role=tab]").forEach(x => x.setAttribute("aria-selected", x === b));
+      draw();
+    }));
+    const r = $("#tBudget"); setFill(r);
+    let tm;
+    r.addEventListener("input", () => {
+      setFill(r); $("#tb").textContent = "₹" + r.value;
+      clearTimeout(tm); tm = setTimeout(() => { S.budget = +r.value; save(); result(); $("#tBudget").focus(); }, 250);
+    });
+    let rt;
+    wireSteppers($("#tgts"), () => { clearTimeout(rt); rt = setTimeout(result, 350); });
+    const ma = $("#macAuto"); if (ma) ma.addEventListener("click", () => { S.myC = null; S.myF = null; save(); result(); });
+    wireGear(screen, () => result());
+    $("#bkOpen").addEventListener("click", () => {
+      const box = $("#bkBox"); box.hidden = !box.hidden;
+      // Plan and settings only: name and email stay out of the code, since people paste these into chats
+      const s2 = Object.assign({}, S, { name: null, guest: false });
+      $("#bkCode").value = btoa(unescape(encodeURIComponent(JSON.stringify({ v: 2, s: s2 }))));
+    });
+    $("#bkCopy").addEventListener("click", (e) => {
+      const btn = e.currentTarget, code = $("#bkCode");
+      const done = (m) => { btn.textContent = m; setTimeout(() => btn.textContent = "Copy code", 2000); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code.value).then(() => done("Copied"), () => { code.select(); done("Selected: copy it"); });
+      else { code.select(); done("Selected: copy it"); }
+    });
+    $("#bkRestore").addEventListener("click", () => {
+      try {
+        const d = JSON.parse(decodeURIComponent(escape(atob($("#bkIn").value.trim()))));
+        if (!d || !d.s) throw 0;
+        const keep = { name: S.name, guest: S.guest };
+        S = Object.assign(clean(d.s), keep); S.step = 4;
+        save(); result();
+      } catch (e) { $("#bkErr").textContent = "That code didn't work. Copy the whole code and try again."; }
+    });
+    const fsb = $("#fixStyleBudget"); if (fsb) fsb.addEventListener("click", () => { S.budget = +fsb.dataset.v; save(); result(); });
+    const kb = $("#keepBudget"); if (kb) kb.addEventListener("click", () => { S.style = "cheap"; S.exclude = []; save(); result(); });
+    const fb = $("#fixBudget"); if (fb) fb.addEventListener("click", () => { S.budget = +fb.dataset.v; save(); result(); });
+    const fp = $("#fixProtein"); if (fp) fp.addEventListener("click", () => { S.myP = +fp.dataset.v; save(); result(); });
+    const fk = $("#fixKcal"); if (fk) fk.addEventListener("click", () => { S.myK = Math.min(5000, Math.max(1000, +fk.dataset.v)); save(); result(); });
+    const ur = $("#useRec2"); if (ur) ur.addEventListener("click", () => { S.myP = null; S.myK = null; S.myC = null; S.myF = null; save(); result(); });
+    $("#restart").addEventListener("click", () => go(0));
+    screen.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => { S.style = b.dataset.style; S.exclude = []; save(); result(); }));
+    const lc = $("#locChange"); if (lc) lc.addEventListener("click", () => { $("#locEdit").hidden = false; lc.hidden = true; });
+    const ls = $("#locSave"); if (ls) ls.addEventListener("click", () => {
+      S.city = $("#lCity").value || null; S.area = $("#lArea").value.trim(); save();
+      result();
+    });
+    const lo = $("#logout"); if (lo) lo.addEventListener("click", () => {
+      // Shared hostel phones: logging out removes the plan, prices and account from this device
+      if (!confirm("Log out and remove your plan and saved prices from this device? Copy your backup code first if you want them back.")) return;
+      clearDevice();
+      cloud.signOut();
+    });
+    const da = $("#deleteAcct"); if (da) da.addEventListener("click", confirmDelete);
+  }
+
+  // Removes everything this app keeps on the device and returns to the welcome screen
+  function clearDevice() {
+    clearTimeout(syncTimer); syncWaiting = false; currentUser = null; loggedOut = true;
+    try { ["mbp", "mbp_user", "mbp_owner", "mbp_owner_name", "mbp_pending", "mbp_base"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+    // Remember the logout: if a slow token refresh writes the session back, the next start signs it out again
+    lsSet("mbp_loggedout", "1");
+    S = fresh0(); lastSig = null; authMode = "home"; setNote("");
+    render(); window.scrollTo(0, 0);   // not go(): that would save the empty plan straight back
+  }
+  function confirmDelete() {
+    screen.innerHTML = `<section class="step">
+      <h1>Delete your account?</h1>
+      <p class="q-sub">This permanently deletes your account and your saved plan. This can't be undone.</p>
+      <p class="err" id="delErr" role="alert"></p>
+      <button type="button" class="cta" id="confirmDelete">Delete my account</button>
+      <button type="button" class="ghost" id="cancelDelete">Cancel</button>
+    </section>`;
+    window.scrollTo(0, 0);
+    $("#cancelDelete").addEventListener("click", () => result());
+    $("#confirmDelete").addEventListener("click", async (e) => {
+      const btn = e.currentTarget; btn.disabled = true; btn.textContent = "Deleting…";
+      try { await cloud.deleteAccount(); }
+      catch (err) { $("#delErr").textContent = "Couldn't delete your account. Check your internet and try again."; btn.disabled = false; btn.textContent = "Delete my account"; return; }
+      clearDevice();
+    });
+  }
+
+  function qty(it) {
+    const f = it.food;
+    if (f.unit) {
+      const n = it.grams / f.unit.g;
+      const shown = n >= 3 ? Math.round(n) : Math.round(n * 2) / 2;
+      const word = f.unit.name + (shown > 1 ? "s" : "");
+      const txt = shown === 0.5 ? "½" : shown % 1 ? fmt(shown, 1) : fmt(shown);
+      return `${txt}<small>${word}</small>`;
+    }
+    const g = it.grams < 20 ? Math.round(it.grams) : Math.round(it.grams / 5) * 5;
+    return `${fmt(g)}<small>${f.unitLabel}</small>`;
+  }
+
+  // Older saves only had kitchen yes/no
+  if (!S.place && S.kitchen !== null && S.kitchen !== undefined) S.place = S.kitchen ? "home" : "hostel";
+  // Every visit starts on the welcome / log-in screen. Saved answers are kept, so logging in
+  // (or "Try it without an account") goes straight back to the plan.
+  S.step = -1; S.name = null; S.guest = false;
+  // The old "account" was only an email typed on this device; real sign-in replaces it (the plan is kept)
+  try { localStorage.removeItem("mbp_user"); } catch (e) {}
+  cloud.onChange((u) => {
+    if (u && !currentUser && !signingIn && !loggedOut && S.step < 0) afterSignIn(u);
+    else if (u && currentUser) retry();   // e.g. token refreshed once the network is back
+  });
+  const boot = () => { track("open"); if (cloud.enabled) startAuth(); else render(); };
+  if (document.readyState === "complete") boot(); else window.addEventListener("load", boot);
+})();
+</script>

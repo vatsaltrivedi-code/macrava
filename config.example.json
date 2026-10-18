@@ -1,0 +1,5 @@
+{
+ "supabaseUrl": "https://YOUR-PROJECT-REF.supabase.co",
+ "supabaseKey": "YOUR-PUBLISHABLE-ANON-KEY",
+ "cfBeacon": ""
+}
