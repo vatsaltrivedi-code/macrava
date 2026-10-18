@@ -747,9 +747,9 @@ __PLAN__
     document.body.appendChild(d); setTimeout(() => d.remove(), 5000);
   }, true);
   // What's an estimate rather than an exact figure, so the app can say so
-  const priceEst = (f) => !myPrice(f) && (f.store === "Licious" ? S.city !== "Bengaluru" : S.city !== "Delhi NCR");
+  const priceEst = (f) => !myPrice(f) && S.city !== "Delhi NCR";
   const estTag = (why) => `<span class="est" title="${esc(why)}">est.</span>`;
-  const priceWhy = (f) => f.store === "Licious" ? "Licious price in Bangalore on 4 Oct. Yours may differ." : `${storeName(f)} price in Gurugram on 3 Oct. Offers change, so yours may differ a little. Tap the price in Shopping to use yours.`;
+  const priceWhy = (f) => f.store === "Licious" ? "Licious price in Greater Noida on 18 Oct. Yours may differ." : `${storeName(f)} price in Gurugram on 3 Oct. Offers change, so yours may differ a little. Tap the price in Shopping to use yours.`;
   const MACRO_WHY = "The numbers on this pack's label don't add up exactly (often fibre or sugar alcohols), so treat them as close, not exact.";
   const myPrice = (f) => (S.myPrices || {})[f.key];
   function opts(extra) {
@@ -1550,7 +1550,7 @@ __PLAN__
         <summary>About prices and data</summary>
         <p>Anything marked “≈” or “est.” is an estimate. Tap or hover the “est.” tag to see why.</p>
         <p>Prices are from Blinkit and Zepto in Gurugram on 3 Oct 2026. Offers change daily, so yours may differ by a few rupees. Tap a price to use what you see.</p>
-        <p>Non-veg readymade items are Licious heat-and-eat and ready-to-eat products. Macros come from their pack labels; prices are Licious Bangalore prices.</p>
+        <p>Non-veg readymade items are Licious heat-and-eat and ready-to-eat products. Macros come from their pack labels; prices are Licious prices in Greater Noida (Delhi NCR).</p>
         <p>Restaurant macros come from each chain's official India nutrition information: McDonald's North &amp; East (Dec 2025) and West &amp; South (2024), Domino's India, KFC India, Pizza Hut India (2022) and Burger King India (2020, the latest it published). You see the McDonald's menu for your region. Restaurant prices were read from each chain's own website on 15 Oct 2026, for a Greater Noida store (Delhi NCR) — except McDonald's West &amp; South, read for Mumbai, because McDonald's North &amp; East shows prices only in its app. They're the item price only, before delivery fees and offers. In other cities they're marked “~” because your price may differ. Pizza Hut prices are for Personal Pan size only. Domino's medium pizzas are listed as half a pizza (3 slices) at half the menu price. Items with no price weren't on the chain's online menu when checked; add what you pay and it's saved for you.</p>
         <p>Suggested targets use the Mifflin-St Jeor formula for calories you burn at rest, times your activity level, then 20% less to lose fat or 10% more to build muscle. Protein is 1.8–2.0 g per kg when building or cutting (within the 1.4–2.0 g/kg the International Society of Sports Nutrition suggests for active people, a little higher when cutting) and 1.0–1.6 g/kg to maintain; above a BMI of 25 it's counted on a healthy weight for your height. Fat is 25% of calories, carbs the rest. They're estimates for healthy adults, not medical advice; set your own anytime. Hostel plans, and PG plans without a kitchen, only use food you can make with what's in your room: eggs need a kettle or microwave, heat-and-eat packs a microwave, and chilled food a fridge unless it's a single cup or bottle you finish that day. A mess meal counts as about 15 g protein, 650 kcal, 95 g carbs and 22 g fat. Carbs and fat targets allow ±10%. Eggs count as 50 g each.</p>
         <p>Your plan alternates between two days so you're not eating the same food every day. Cups, bottles, eggs and bars are always whole, and fresh food is planned so it's finished before it goes off.</p>
@@ -1750,13 +1750,13 @@ __PLAN__
         <ul class="foods">${list.map(f => `<li>
           <div class="qty">${fmt(f.p * f.packQty)}<small>g protein / pack</small></div>
           <div class="fname"><div class="n">${esc(f.name)}</div>
-            <div class="m">${S.city !== "Bengaluru" ? "≈" : ""}₹${fmt(f.price)}${S.city !== "Bengaluru" ? " " + estTag("Licious price in Bangalore on 4 Oct. Yours may differ.") : ""} for ${esc(f.pack)} · ${esc(f.prep || "")} · ${fmt(f.kcal * f.packQty)} kcal</div>
+            <div class="m">${S.city !== "Delhi NCR" ? "≈" : ""}₹${fmt(f.price)}${S.city !== "Delhi NCR" ? " " + estTag("Licious price in Greater Noida on 18 Oct. Yours may differ.") : ""} for ${esc(f.pack)} · ${esc(f.prep || "")} · ${fmt(f.kcal * f.packQty)} kcal</div>
             ${S.kitchen === false && needs(f).includes("microwave") && !(S.gear || {}).microwave ? `<div class="how warn">Needs a microwave</div>` : ""}
             ${picked.has(f.link) ? `<div class="grams">${[0.5, 1].map(k => `<button type="button" class="pill" data-g="${Math.round(f.packQty * k)}" data-glink="${esc(f.link)}" aria-pressed="${picked.get(f.link) === Math.round(f.packQty * k)}">${k === 1 ? "1 pack a day" : "½ pack a day"}</button>`).join("")}</div>`
               : ""}
             <div class="store-name">Licious</div></div>
           <button type="button" class="swap add${picked.has(f.link) ? " on" : ""}" data-lic="${esc(f.link)}" ${blocked ? "disabled" : ""}>${picked.has(f.link) ? "Added" : "Add"}</button></li>`).join("")}</ul>
-        <p class="foot" style="margin-top:12px">Macros are read from the nutrition label on each Licious pack. Prices are Licious Bangalore prices on 4 Oct 2026.</p>`;
+        <p class="foot" style="margin-top:12px">Macros are read from the nutrition label on each Licious pack. Prices are Licious prices in Greater Noida on 18 Oct 2026.</p>`;
       wireSrc();
       panel.querySelectorAll("[data-lic]").forEach(b => b.addEventListener("click", () => {
         const link = b.dataset.lic, f = byLink.get(link);
