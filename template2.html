@@ -2025,6 +2025,8 @@ __PLAN__
     const f = it.food;
     if (f.unit) {
       const n = it.grams / f.unit.g;
+      // under one: nearest quarter, never shown as 0
+      if (n < 0.875) { const q = Math.max(1, Math.round(n * 4)); return `${["", "¼", "½", "¾"][q]}<small>${f.unit.name}</small>`; }
       const shown = n >= 3 ? Math.round(n) : Math.round(n * 2) / 2;
       const word = f.unit.name + (shown > 1 ? "s" : "");
       const txt = shown === 0.5 ? "½" : shown % 1 ? fmt(shown, 1) : fmt(shown);
