@@ -328,7 +328,7 @@ function planCore(foods, opts, lp) {
     const up = Math.max(1, Math.ceil(u - 0.05)), extra = (up * f.unit.g - it.grams) * priceOf(f) / f.packQty;
     if (u >= 0.5 && spent + extra <= o.budget + 0.5) { spent += extra; it.grams = up * f.unit.g; it.cost += extra; return true; }
     if (u >= 1) { it.grams = Math.floor(u) * f.unit.g; it.cost = it.grams * priceOf(f) / f.packQty; return true; }
-    return it.grams * f.p < 2;   // never drop something the plan really leans on: keep it as it is
+    return it.grams * f.p >= 2;   // a sip that adds under 2 g protein is dropped; something the plan really leans on stays
   });
   items.sort((a, b) => b.food.p * b.grams - a.food.p * a.grams);
   const sum = (fn) => items.reduce((s, it) => s + fn(it), 0);
