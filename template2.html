@@ -211,6 +211,22 @@ ul.foods li { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; ga
 .swap { background: none; border: 1.5px solid var(--hair); border-radius: 999px; padding: 7px 12px; font-size: 13px; color: var(--muted); cursor: pointer; white-space: nowrap; }
 .swap:hover { color: var(--ink); border-color: var(--ink); }
 li.mess .qty { color: var(--muted); }
+li.mess .pl-open { font-size: 13px; margin-top: 4px; padding: 0; }
+ul.foods li.plate-ed { padding: 14px; }
+.pl-head { font-weight: 600; margin-bottom: 8px; }
+ul.pl-list { list-style: none; margin: 0; padding: 0; }
+ul.pl-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--hair); }
+ul.pl-list li:first-child { border-top: 0; }
+.pl-n { display: flex; flex-direction: column; min-width: 0; font-size: 15px; }
+.pl-n small { color: var(--muted); font-size: 12px; }
+.pl-step { display: flex; align-items: center; gap: 10px; flex: none; }
+.pl-step b { min-width: 16px; text-align: center; font-variant-numeric: tabular-nums; }
+.pl-b { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--hair); background: var(--bg); color: var(--ink); font: 600 18px var(--font); cursor: pointer; line-height: 1; }
+.pl-b:disabled { opacity: .35; cursor: default; }
+.pl-tot { font-weight: 600; margin: 10px 0 2px; }
+.pl-act { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 10px; }
+.gap-note { font-size: 14px; margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--accent-soft); }
+.gap-note.good { background: var(--surface); border: 1.5px solid var(--hair); }
 .undo { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); padding-top: 10px; }
 .link { background: none; border: 0; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; font-size: 14px; }
 
@@ -391,7 +407,23 @@ __PLAN__
   const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // Answers. Saved in this browser only, so returning visitors land on their plan.
-  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false } };
+  // Mess/home plate items: rough values for one usual portion (a katori is about 150 ml). Estimates, not lab values.
+  const PLATE = [
+    ["roti", "Roti / chapati", "roti", { p: 3, kcal: 100, c: 18, f: 2 }],
+    ["rice", "Rice", "katori", { p: 4, kcal: 200, c: 43, f: 0.5 }],
+    ["dal", "Dal", "katori", { p: 6, kcal: 140, c: 18, f: 4 }],
+    ["rajma", "Rajma / chole", "katori", { p: 8, kcal: 210, c: 28, f: 7 }],
+    ["paneer", "Paneer sabzi", "katori", { p: 9, kcal: 230, c: 8, f: 17 }],
+    ["sabzi", "Veg sabzi", "katori", { p: 3, kcal: 130, c: 12, f: 8 }],
+    ["egg", "Egg (boiled or curry)", "egg", { p: 6, kcal: 90, c: 1, f: 6 }],
+    ["chicken", "Chicken curry", "katori", { p: 18, kcal: 250, c: 6, f: 15 }],
+    ["curd", "Curd / raita", "katori", { p: 4, kcal: 70, c: 5, f: 3.5 }],
+    ["paratha", "Paratha", "paratha", { p: 4, kcal: 220, c: 30, f: 9 }],
+    ["poha", "Poha / upma", "plate", { p: 5, kcal: 250, c: 40, f: 8 }],
+    ["milk", "Milk", "glass", { p: 6, kcal: 120, c: 10, f: 6 }],
+  ];
+  const PLATE_BY = new Map(PLATE.map(x => [x[0], x]));
+  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false }, plates: {} };
   const FOOD_BY_KEY = new Map(FOODS.map(f => [f.key, f]));
   const CITY_LIST = ["Delhi NCR", "Bengaluru", "Mumbai", "Pune", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad",
     "Jaipur", "Chandigarh", "Lucknow", "Indore", "Bhopal", "Dehradun", "Other"];
@@ -442,6 +474,17 @@ __PLAN__
         if (FOOD_BY_KEY.has(k) && Number.isFinite(p) && p > 0) m[k] = { p: Math.min(20000, p), d: typeof v.d === "string" ? v.d.slice(0, 12) : "" };
       }
       o.myPrices = Object.assign({}, m);
+    }
+    if (raw.plates && typeof raw.plates === "object") {
+      for (const [d, day] of Object.entries(raw.plates).slice(0, 30)) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || !day || typeof day !== "object") continue;
+        for (const meal of ["Breakfast", "Lunch", "Dinner"]) {
+          const pl = day[meal]; if (!pl || typeof pl !== "object") continue;
+          const q = {};
+          for (const [k, v] of Object.entries(pl)) { const n = Math.round(Number(v)); if (PLATE_BY.has(k) && n > 0) q[k] = Math.min(10, n); }
+          if (Object.keys(q).length) (o.plates[d] = o.plates[d] || {})[meal] = q;
+        }
+      }
     }
     if (raw.ate && typeof raw.ate === "object") {
       for (const [d, list] of Object.entries(raw.ate)) {
@@ -600,6 +643,8 @@ __PLAN__
     const cut = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
     out.ate = {};
     for (const [k, v] of Object.entries(st.ate || {})) if (k >= cut) out.ate[k] = v;
+    out.plates = {};
+    for (const [k, v] of Object.entries(st.plates || {})) if (k >= cut) out.plates[k] = v;
     out.name = null; out.guest = false; out.step = -1;
     return out;
   }
@@ -633,6 +678,10 @@ __PLAN__
     hard:  { m: 1.725, t: "Hard, 6–7 days" },
   };
   const MESS = { p: 15, kcal: 650, c: 95, f: 22 }; // a typical mess thali, roughly
+  // Today's logged mess plate for a meal (null if not logged), and its macros
+  const plateOf = (meal) => { const d = (S.plates || {})[localDay()]; return (d && d[meal]) || null; };
+  const plateSum = (pl) => Object.entries(pl).reduce((s, [k, n]) => { const v = PLATE_BY.get(k)[3];
+    return { p: s.p + v.p * n, kcal: s.kcal + v.kcal * n, c: s.c + v.c * n, f: s.f + v.f * n }; }, { p: 0, kcal: 0, c: 0, f: 0 });
 
   // What we suggest. The person's own numbers (myP, myK...) always win.
   //  Calories: Mifflin-St Jeor resting burn x activity, then -20% to lose fat, +10% to build muscle.
@@ -1431,7 +1480,7 @@ __PLAN__
     }));
     const again = root.querySelector("#proAgain"); if (again) again.addEventListener("click", () => { lsSet("mbp_pro", null); redraw(); });
   }
-  let selDay = 0, priceEdit = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
+  let selDay = 0, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
   function result() {
     const t = targets();
     const o = opts();
@@ -1614,10 +1663,28 @@ __PLAN__
       const dp = planFor(selDay), isToday = selDay === 0;
       const rows = planMeals(dp.items);
       const dayName = (i) => i === 0 ? "Today" : i === 1 ? "Tmrw" : new Date(Date.now() + i * 864e5).toLocaleDateString("en-IN", { weekday: "short" });
-      const messRow = (meal, n) => n ? `<li class="mess${ate.has(meal + ":mess") ? " ate" : ""}">
+      // A mess meal counts as a typical thali until the plate is logged; then the plate's own numbers are used
+      const messMac = (meal, n) => { const pl = isToday && n ? plateOf(meal) : null;
+        return pl ? Object.assign(plateSum(pl), { logged: true }) : { p: n * MESS.p, kcal: n * MESS.kcal, c: n * MESS.c, f: n * MESS.f, logged: false }; };
+      const plateText = (pl) => Object.entries(pl).map(([k, n]) => { const x = PLATE_BY.get(k);
+        return x[2] === "katori" || x[2] === "plate" || x[2] === "glass" ? `${n > 1 ? n + " " : ""}${x[1].split(" /")[0].toLowerCase()}` : `${n} ${x[1].split(" /")[0].split(" (")[0].toLowerCase()}`; }).join(", ");
+      const plateEditor = (meal) => `<li class="pedit plate-ed"><div class="pl-head">What was on your ${meal.toLowerCase()} plate?</div>
+          <ul class="pl-list">${PLATE.filter(([k]) => !(S.diet === "veg" && (k === "egg" || k === "chicken")) && !(S.diet === "egg" && k === "chicken")).map(([k, name, unit, v]) => { const n = plateDraft[k] || 0;
+            return `<li><span class="pl-n">${esc(name)}<small>${v.p} g protein per ${unit}</small></span>
+              <span class="pl-step"><button type="button" class="pl-b" data-pl-dec="${k}" aria-label="One less ${esc(name)}"${n ? "" : " disabled"}>−</button>
+              <b aria-live="polite">${n}</b><button type="button" class="pl-b" data-pl-inc="${k}" aria-label="One more ${esc(name)}">+</button></span></li>`; }).join("")}</ul>
+          <p class="pl-tot">${(() => { const s = plateSum(plateDraft); return `≈ ${fmt(s.p)} g protein · ${fmt(s.kcal)} kcal`; })()}</p>
+          <p class="hint-sm">Portions are rough: a katori is a usual mess bowl (about 150 ml).</p>
+          <div class="pl-act"><button type="button" class="btn-sm" id="plSave">Save plate</button><button type="button" class="link" id="plCancel">Cancel</button>
+          ${plateOf(meal) ? `<button type="button" class="link" id="plClear">Use the usual estimate</button>` : ""}</div></li>`;
+      const messRow = (meal, n) => { if (!n) return ""; const m = messMac(meal, n), pl = isToday ? plateOf(meal) : null;
+        return `<li class="mess${ate.has(meal + ":mess") ? " ate" : ""}">
           ${isToday ? `<button type="button" class="tick-btn" data-ate="${meal}:mess" aria-pressed="${ate.has(meal + ":mess")}" aria-label="Mark mess meal as eaten"></button>` : `<span class="tick-sp"></span>`}
           <div class="qty">${n}×<small>meal</small></div>
-          <div class="fname"><div class="n">Mess or home food</div><div class="m"><span class="p">≈${n * MESS.p}g protein</span> ${estTag("A typical mess thali, roughly: 15 g protein, 650 kcal, 95 g carbs, 22 g fat. Yours may be more or less.")} · already eating</div></div><span></span></li>` : "";
+          <div class="fname"><div class="n">Mess or home food</div><div class="m"><span class="p">≈${fmt(m.p)}g protein</span> ${pl
+            ? estTag("From the plate you logged. Portions are rough estimates.") + ` · ${esc(plateText(pl))}`
+            : estTag("A typical mess thali, roughly: 15 g protein, 650 kcal, 95 g carbs, 22 g fat. Log your plate for a better number.") + " · usual estimate"}</div>
+            ${isToday ? `<button type="button" class="link pl-open" data-plate="${meal}">${pl ? "Edit plate" : "What's on your plate?"}</button>` : ""}</div><span></span></li>${isToday && plateEdit === meal ? plateEditor(meal) : ""}`; };
       const edShown = new Set();
       const foodRow = (meal, { it, share }) => {
         const f = it.food, key = meal + ":" + f.id, part = { food: f, grams: it.grams * share };
@@ -1644,14 +1711,26 @@ __PLAN__
       // protein eaten so far today
       let eaten = 0;
       for (const [meal, list] of Object.entries(rows)) for (const r of list) if (ate.has(meal + ":" + r.it.food.id)) eaten += r.it.grams * r.share * r.it.food.p;
-      for (const m of ["Breakfast", "Lunch", "Dinner"]) if (ate.has(m + ":mess")) eaten += messIn(m) * MESS.p;
+      for (const m of ["Breakfast", "Lunch", "Dinner"]) if (ate.has(m + ":mess")) eaten += messMac(m, messIn(m)).p;
+      // Logged plates vs the usual estimate the plan was made with: suggest a top-up from today's cheapest protein
+      let plateGap = 0;
+      if (isToday) for (const m of ["Breakfast", "Lunch", "Dinner"]) { const n = messIn(m), mm = messMac(m, n); if (mm.logged) plateGap += mm.p - n * MESS.p; }
+      let gapNote = "";
+      if (isToday && plateGap <= -4) {
+        const best = dp.items.filter(it => it.grams > 0 && it.cost > 0 && it.food.p > 0.05)
+          .sort((a, b) => b.food.p / (b.cost / b.grams) - a.food.p / (a.cost / a.grams))[0];
+        const g = best ? Math.ceil(-plateGap / best.food.p / 5) * 5 : 0;
+        gapNote = `<p class="gap-note">Your mess food had about ${fmt(-plateGap)} g less protein than the plan expected.${best
+          ? ` To make it up, add about <b>${qty({ food: best.food, grams: g }).replace("<small>", " ").replace("</small>", "")} ${esc(best.food.name)}</b> (≈₹${fmt(best.cost / best.grams * g)}).` : ""}</p>`;
+      } else if (isToday && plateGap >= 4) gapNote = `<p class="gap-note good">Your mess food had about ${fmt(plateGap)} g more protein than the plan expected.</p>`;
       outItems().forEach((o, i) => { if (ate.has("out:" + i)) eaten += o.r.p; });
       const sec = (meal) => {
         const mess = messRow(meal, messIn(meal));
         const body = rows[meal].map(r => foodRow(meal, r)).join("") + mess;
         const n = messIn(meal);
-        const mp = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.p, 0) + n * MESS.p;
-        const mk = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.kcal, 0) + n * MESS.kcal;
+        const mm = messMac(meal, n);
+        const mp = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.p, 0) + mm.p;
+        const mk = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.kcal, 0) + mm.kcal;
         return body ? `<h3 class="meal">${meal}<span>${fmt(mp)} g protein · ${fmt(mk)} kcal</span></h3><ul class="foods">${body}</ul>` : "";
       };
       const daysRow = `<div class="days" role="radiogroup" aria-label="Day of the week">${[0, 1, 2, 3, 4, 5, 6].map(i =>
@@ -1665,13 +1744,37 @@ __PLAN__
         ${!isPro() ? `<p class="hint-sm">Today's cheapest plan. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
         ${isToday ? `<div class="eaten"><span>Eaten today</span><b>${fmt(eaten)} <small>of ${targets().protein} g protein</small></b>
-          <div class="bar"><i style="width:${Math.min(100, eaten / targets().protein * 100)}%"></i></div></div>` : ""}
+          <div class="bar"><i style="width:${Math.min(100, eaten / targets().protein * 100)}%"></i></div></div>${gapNote}` : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
         ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
         ${cut ? `<div class="undo"><span>${cut} food${cut > 1 ? "s" : ""} swapped out</span><button type="button" class="link" id="undo">Undo all</button></div>` : ""}`;
       panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
       wirePriceEdit(drawDay);
+      panel.querySelectorAll("[data-plate]").forEach(b => b.addEventListener("click", () => {
+        const m = b.dataset.plate; if (plateEdit === m) { plateEdit = null; drawDay(); return; }
+        plateEdit = m; plateDraft = Object.assign({}, plateOf(m) || {}); priceEdit = null; drawDay();
+        const ed = panel.querySelector(".plate-ed"); if (ed) ed.scrollIntoView({ block: "nearest" });
+      }));
+      panel.querySelectorAll("[data-pl-inc],[data-pl-dec]").forEach(b => b.addEventListener("click", () => {
+        const k = b.dataset.plInc || b.dataset.plDec, n = (plateDraft[k] || 0) + (b.dataset.plInc ? 1 : -1);
+        if (n > 0) plateDraft[k] = Math.min(10, n); else delete plateDraft[k];
+        drawDay(); const f = panel.querySelector(`[data-pl-${b.dataset.plInc ? "inc" : "dec"}="${k}"]`); if (f && !f.disabled) f.focus();
+      }));
+      const plS = $("#plSave"); if (plS) plS.addEventListener("click", () => {
+        const meal = plateEdit, d = localDay(), day = Object.assign({}, (S.plates || {})[d] || {});
+        if (Object.keys(plateDraft).length) {
+          day[meal] = Object.assign({}, plateDraft);
+          if (!S.ate[today].includes(meal + ":mess")) { S.ate[today].push(meal + ":mess"); track("tick"); }
+        } else delete day[meal];
+        S.plates = Object.keys(day).length ? { [d]: day } : {};
+        plateEdit = null; save(); drawDay();
+      });
+      const plC = $("#plCancel"); if (plC) plC.addEventListener("click", () => { plateEdit = null; drawDay(); });
+      const plX = $("#plClear"); if (plX) plX.addEventListener("click", () => {
+        const d = localDay(), day = Object.assign({}, (S.plates || {})[d] || {}); delete day[plateEdit];
+        S.plates = Object.keys(day).length ? { [d]: day } : {}; plateEdit = null; save(); drawDay();
+      });
       panel.querySelectorAll("[data-ate]").forEach(b => b.addEventListener("click", () => {
         const k = b.dataset.ate, list = S.ate[today];
         if (!list.includes(k)) {
