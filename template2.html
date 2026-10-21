@@ -1,3 +1,6 @@
+<!doctype html>
+<html lang="en">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Macro Budget Planner</title>
@@ -378,7 +381,8 @@ ul.shop .sp { font-variant-numeric: tabular-nums; font-weight: 600; }
 <script>/* the chosen theme, before anything draws (no flash of the wrong colours) */
 try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (e) {}
 </script>
-
+</head>
+<body>
 <div class="app">
   <div class="bar">
     <button type="button" class="back" id="back" hidden>← Back</button>
@@ -2064,3 +2068,5 @@ __PLAN__
   if (document.readyState === "complete") boot(); else window.addEventListener("load", boot);
 })();
 </script>
+</body>
+</html>
