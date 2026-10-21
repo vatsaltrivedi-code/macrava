@@ -25,7 +25,14 @@ jobs:
           mkdir -p site
           cp macro-budget-planner.html site/index.html
           cp dist/privacy.html dist/terms.html site/
+          cp public/robots.txt public/sitemap.xml site/
           grep -q "sb_publishable_" site/index.html
+      - name: Link preview image
+        continue-on-error: true
+        run: |
+          npm i --prefix /tmp/og --no-save --silent playwright-core@1.56.0
+          NODE_PATH=/tmp/og/node_modules node public/og-shot.js
+          ls -l site/og.png
       - name: Publish
         uses: cloudflare/wrangler-action@v3
         with:
