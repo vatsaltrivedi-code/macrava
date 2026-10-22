@@ -25,7 +25,7 @@ jobs:
           mkdir -p site
           cp macro-budget-planner.html site/index.html
           cp dist/privacy.html dist/terms.html site/
-          cp public/robots.txt public/sitemap.xml site/
+          cp public/robots.txt public/sitemap.xml public/manifest.webmanifest public/sw.js public/icon.svg site/
           grep -q "sb_publishable_" site/index.html
       - name: Link preview image
         continue-on-error: true
