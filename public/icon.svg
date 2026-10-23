@@ -1,12 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="15" fill="#e8590c"/>
-  <g fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" transform="rotate(-90 32 32)">
-    <circle cx="32" cy="32" r="20" pathLength="100" stroke-dasharray="38 62" stroke-dashoffset="-3"/>
-    <circle cx="32" cy="32" r="20" pathLength="100" stroke-dasharray="26 74" stroke-dashoffset="-47" opacity=".72"/>
-    <circle cx="32" cy="32" r="20" pathLength="100" stroke-dasharray="15 85" stroke-dashoffset="-79" opacity=".45"/>
-  </g>
-  <g fill="none" stroke="#fff" stroke-width="3.6" stroke-linejoin="round">
-    <path d="M23.5 22H40.5M23.5 27.6H40.5"/>
-    <path d="M23.5 22h6.2a6.1 6.1 0 0 1 0 12.2h-6.2l11.6 11.8"/>
-  </g>
+  <path d="M10 33H54a22 19 0 0 1-44 0Z" fill="#fff"/>
+  <rect x="23" y="51.5" width="18" height="4" rx="2" fill="#fff"/>
+  <rect x="20" y="22" width="6.5" height="9" rx="3.25" fill="#fff" opacity=".6"/>
+  <rect x="28.75" y="17" width="6.5" height="14" rx="3.25" fill="#fff" opacity=".8"/>
+  <rect x="37.5" y="10" width="6.5" height="21" rx="3.25" fill="#fff"/>
 </svg>
