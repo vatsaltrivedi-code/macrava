@@ -28,7 +28,7 @@ const evs = (store) => store.usage.map(u => u.event);
       const now = await p.$$eval('#panel .swap[data-id]', bs => bs.map(b => +b.dataset.id));
       const sOut = store.food.filter(f => f.event === 'swap_out'), sIn = store.food.filter(f => f.event === 'swap_in');
       ok(sOut.length === 1 && sOut[0].id === out, 'swap: swapped-out food recorded');
-      const fresh = now.filter(id => !shown.includes(id));
+      const fresh = [...new Set(now.filter(id => !shown.includes(id)))];
       ok(sIn.length === fresh.length && sIn.every(f => fresh.includes(f.id)) && !sIn.some(f => f.id === out), 'swap: new foods recorded as swapped in (' + sIn.map(f => f.id) + ' vs ' + fresh + ')');
       await p.click('#undo'); await wait(600);
       ok(store.food.filter(f => f.event === 'swap_in').length === sIn.length, 'undo is not counted as a swap');
