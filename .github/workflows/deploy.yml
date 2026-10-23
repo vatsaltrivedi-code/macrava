@@ -1,4 +1,5 @@
-# Builds the app and publishes it to Cloudflare Pages (project "macro-budget") on every push to main.
+# Builds the app and publishes it to Cloudflare Pages (project "macrava" -> macrava.pages.dev) on every push to main.
+# The old address (project "macro-budget") gets the small page in moved/ that sends people to the new one.
 # Needs two repository secrets: CLOUDFLARE_APITOKEN (Pages: Edit only) and CLOUDFLARE_ACCOUNT_ID.
 name: Deploy to Cloudflare Pages
 on:
@@ -33,9 +34,22 @@ jobs:
           npm i --prefix /tmp/og --no-save --silent playwright-core@1.56.0
           NODE_PATH=/tmp/og/node_modules node public/og-shot.js
           ls -l site/og.png
+      - name: Create the Pages project (first run only; fails harmlessly once it exists)
+        continue-on-error: true
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_APITOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages project create macrava --production-branch=main
       - name: Publish
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_APITOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy site --project-name=macro-budget --branch=main --commit-dirty=true
+          command: pages deploy site --project-name=macrava --branch=main --commit-dirty=true
+      - name: Old address sends people to the new one
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_APITOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy moved --project-name=macro-budget --branch=main --commit-dirty=true
