@@ -43,10 +43,10 @@ async function open(b, store, pro) {
       await p.click('#panel .pe'); await wait(100);
       ok(await vis(p, '#pIn'), 'basic: tapping a price on Today opens the editor');
       ok((await p.$$('#pIn')).length === 1, 'editor shown once even if the food is in two meals');
+      const base = await p.$eval('#pIn', e => e.value);   // read before typing, so it is the pack's real price
       await p.fill('#pIn', '0'); await p.click('#pSave'); await wait(50);
       ok(/Enter the price of one pack/.test(await p.$eval('#pErr', e => e.innerText)), 'price 0 refused');
-      const base = await p.$eval('#pIn', e => e.value);
-      await p.fill('#pIn', String(Math.round(+base * 1.1) || 50)); await p.click('#pSave'); await wait(600);
+      await p.fill('#pIn', String(Math.round(+base * 0.9) || 50)); await p.click('#pSave'); await wait(600);   // a lower price keeps the food in the plan
       ok(/your price/.test(await panelText(p)), 'saved price marked "your price" on Today');
       ok(await p.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('mbp')).myPrices || {}).length === 1), 'price saved in the plan');
       ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no sideways scroll');
