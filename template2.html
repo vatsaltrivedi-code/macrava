@@ -159,6 +159,7 @@ input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 
 .preview .why { display: block; font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
 .est { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .02em; color: var(--muted); border: 1px solid var(--hair); border-radius: 6px; padding: 0 4px; line-height: 15px; vertical-align: 1px; cursor: help; }
 .est-line { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
+.q-line { font-size: 13px; color: var(--muted); margin: 6px 0 0; } .q-line b { color: var(--ink); }
 .toast { position: fixed; left: 16px; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); max-width: 520px; margin: 0 auto; background: var(--ink); color: var(--bg); font-size: 13.5px; line-height: 1.45; padding: 12px 14px; border-radius: 12px; z-index: 50; box-shadow: 0 6px 24px rgba(0,0,0,.25); }
 .adj { font-size: 13px; padding: 6px 0 0; }
 .days { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 4px; scrollbar-width: none; }
@@ -852,6 +853,7 @@ __PLAN__
       budget: Math.max(0, S.budget - outSum("price")), protein: t.protein, kcal: t.kcal, carbs: t.carbs, fat: t.fat, diet: S.diet || "nonveg", kitchen: S.kitchen !== false, gear: S.gear,
       have: { p: S.meals * MESS.p + outSum("p"), kcal: S.meals * MESS.kcal + outSum("kcal"), c: S.meals * MESS.c + outSum("c"), f: S.meals * MESS.f + outSum("f") }, exclude: S.exclude,
       include: rtePicks(), style: S.style || "balanced", prices: myPriceMap(),
+      breakfast: (S.meals || 0) < 3,   // no mess breakfast: the plan carries a proper breakfast
     }, extra);
   }
 
@@ -1423,7 +1425,7 @@ __PLAN__
   const MEALS = ["Breakfast", "Lunch", "Snacks", "Dinner"];
   function mealsFor(f) {
     const c = f.cat;
-    if (c === "Soya & dal" && /sattu/i.test(f.name)) return ["Breakfast", "Lunch", "Snacks"];
+    if (c === "Soya & dal" && /sattu/i.test(f.name)) return ["Snacks", "Lunch"];
     if (["Grains & atta", "Soya & dal", "Pasta & noodles", "Chicken", "Fish & seafood", "Mutton", "Paneer & tofu", "Curd", "Ready non-veg"].includes(c)) return ["Lunch", "Dinner"];
     if (c === "Oats & muesli") return ["Breakfast", "Snacks"];
     if (c === "Bread") return ["Breakfast", "Lunch", "Dinner", "Snacks"];
@@ -1432,7 +1434,8 @@ __PLAN__
     if (c === "Milk") return ["Breakfast", "Dinner", "Snacks"];
     if (c === "Cheese") return ["Breakfast", "Lunch", "Dinner"];
     if (c === "Yogurt") return ["Snacks", "Lunch", "Breakfast", "Dinner"];
-    if (["Protein powder", "Protein shake"].includes(c)) return ["Snacks", "Breakfast"];
+    if (["Protein powder", "Protein shake"].includes(c)) return ["Snacks", "Dinner"];
+    if (c === "Dairy drink") return ["Snacks", "Breakfast", "Lunch"];
     if (c === "Frozen dessert") return ["Dinner", "Snacks"];
     return ["Snacks"];
   }
@@ -1453,8 +1456,23 @@ __PLAN__
       if (u) { const n = Math.round(it.grams / u.g); if (n < 2) return 1; return Math.ceil(n / 2) / n; }
       return 0.5;
     };
+    // A proper breakfast (when the mess doesn't serve one): a base (bread, oats, muesli) and a protein food
+    // (milk, eggs, curd, yogurt, cheese) go there first; snacks, bars and sattu never make up breakfast.
+    const placed = new Set();
+    if (!messIn("Breakfast")) {
+      const base = items.filter(it => it.food.cat === "Bread" || it.food.cat === "Oats & muesli").sort((a, b) => kcalOf(b) - kcalOf(a))[0];
+      const prot = items.filter(it => ["Milk", "Eggs", "Curd", "Yogurt", "Cheese", "Dairy drink"].includes(it.food.cat))
+        .sort((a, b) => b.grams * b.food.p - a.grams * a.food.p)[0];
+      for (const it of [base, prot]) {
+        if (!it) continue;
+        // a big amount is shared with another meal (bread with dinner, milk at night)
+        const a = kcalOf(it) > 0.25 * total * 0.8 ? splitShare(it) : 1;
+        put("Breakfast", it, a); placed.add(it);
+        if (a < 1) { const other = mealsFor(it.food).find(m => m !== "Breakfast") || "Snacks"; put(other, it, 1 - a); }
+      }
+    }
     // foods that fit fewer meals are placed first, so flexible ones can fill the gaps
-    const todo = [...items].sort((a, b) => mealsFor(a.food).length - mealsFor(b.food).length || kcalOf(b) - kcalOf(a));
+    const todo = [...items].filter(it => !placed.has(it)).sort((a, b) => mealsFor(a.food).length - mealsFor(b.food).length || kcalOf(b) - kcalOf(a));
     for (const it of todo) {
       const ok = mealsFor(it.food), k = kcalOf(it);
       // main dishes go half to lunch, half to dinner (unless a mess meal already covers that meal)
@@ -1572,6 +1590,7 @@ __PLAN__
           <h2>${S.name ? `${esc(S.name)}, this costs you` : "Costs you"}</h2>
           <div class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}<small> / day</small></div>
           <div class="stats"><span><b>${fmt(T.kcal)}</b> kcal</span><span><b>${fmt(T.c)}g</b> carbs</span><span><b>${fmt(T.f)}g</b> fat</span></div>
+          ${T.p > 0 && p.totals.hq != null ? `<p class="q-line" title="Complete protein your body uses well: milk, curd, paneer, eggs, soya, chicken, fish, whey"><b>${fmt(Math.min(100, Math.round(100 * p.totals.hq / T.p)))}%</b> from top-quality protein</p>` : ""}
           ${costEst || macroEst ? `<p class="est-line">≈ Estimate: ${[costEst ? `prices are from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
         </div>
       </div>
