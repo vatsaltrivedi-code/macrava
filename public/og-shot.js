@@ -23,5 +23,9 @@ const fs = require('fs'), path = require('path');
   await icon(192, 'icon-192.png');
   await icon(512, 'icon-512.png');
   await icon(512, 'icon-maskable-512.png', true);
+  // iPhone home screen: a plain square (iOS rounds the corners itself)
+  await p.setViewportSize({ width: 180, height: 180 });
+  await p.setContent(`<style>html,body{margin:0}svg{display:block}</style>${svg.replace(' rx="15"', '').replace('<svg ', '<svg width="180" height="180" ')}`);
+  await p.screenshot({ path: 'site/apple-touch-icon.png' });
   await b.close();
 })();
