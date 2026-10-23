@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Macro Budget is now Macrava</title>
+<link rel="canonical" href="https://macrava.pages.dev/">
+<meta name="robots" content="noindex">
+<meta name="google-site-verification" content="4-be18QB-EjKNOfwJ63Osz_Xl6_OQeoYtZWV43RxH2A">
+<script>
+/* The app moved to macrava.pages.dev. A guest's saved plan lives in this browser under the old address,
+   so it travels along in the part of the link after "#" (never sent to any server) and the new site keeps it.
+   Signed-in people just sign in again there; their plan comes back from their account. */
+(function () {
+  var to = "https://macrava.pages.dev" + location.pathname + location.search, d = {}, n = 0;
+  try {
+    var signedIn = localStorage.getItem("mbp_owner") || Object.keys(localStorage).some(function (k) { return k.indexOf("sb-") === 0; });
+    if (!signedIn && location.pathname === "/") ["mbp", "theme", "mbp_device", "mbp_seen", "mbp_pro"].forEach(function (k) {
+      var v = localStorage.getItem(k); if (v) { d[k] = v; n++; }
+    });
+  } catch (e) {}
+  if (n) to += "#move=" + encodeURIComponent(JSON.stringify(d));
+  location.replace(to);
+})();
+</script>
+<style>body{font:16px/1.5 system-ui,sans-serif;background:#fafaf8;color:#121212;display:grid;place-items:center;min-height:90vh;margin:0;padding:16px;text-align:center}a{color:#e8590c;font-weight:600}</style>
+</head>
+<body>
+<p>Macro Budget is now <b>Macrava</b>.<br>Taking you there… <a href="https://macrava.pages.dev/">macrava.pages.dev</a></p>
+</body>
+</html>
