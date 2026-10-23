@@ -61,6 +61,19 @@ function packDays(f, budget) {
   else if (f.price > 2 * budget) d = Math.min(d, 21);   // 2+ days' budget: within three weeks
   return d;
 }
+// Complete, well-absorbed protein (DIAAS about 0.9 or more: dairy, eggs, meat, fish, soya, whey).
+// Cereals, nuts, dals, chana and sattu score lower (about 0.4-0.8), so they may add protein but not carry the plan.
+const HQ_CATS = ["Milk", "Curd", "Yogurt", "Cheese", "Paneer & tofu", "Eggs", "Chicken", "Fish & seafood", "Mutton", "Ready non-veg", "Dairy drink"];
+function hq(f) {
+  if (HQ_CATS.includes(f.cat)) return true;
+  if (f.cat === "Soya & dal") return /soya/i.test(f.name);
+  if (f.cat === "Protein powder" || f.cat === "Protein shake") return !/pea|plant/i.test(f.name);   // whey, milk and yeast proteins
+  return false;
+}
+const QUALITY = 0.65;   // share of the day's protein that should come from those foods
+// A proper breakfast: a base (bread, oats, muesli) and a protein food that belongs at breakfast
+const BF_BASE = (f) => f.cat === "Bread" || f.cat === "Oats & muesli";
+const BF_PROT = (f) => ["Milk", "Eggs", "Curd", "Yogurt", "Cheese", "Paneer & tofu", "Dairy drink"].includes(f.cat) && !/tempeh/i.test(f.name);
 // Salty packaged snacks: cheap calories, but not more than a small bowl a day
 const SALTY = /namkeen|bhujia|chips|mixture|papdi|crusher|sev\b|puffs|crisps|nachos/i;
 const SALTY_MAX = 30;
@@ -98,7 +111,34 @@ const STYLE = {
 };
 const LIQUID_CATS = ["Milk", "Curd", "Yogurt", "Protein shake", "Dairy drink"];
 
+// Quality and a proper breakfast are kept whenever the budget allows; if a plan can't be made with them,
+// they're relaxed step by step (and the plan says so) rather than leaving the person with nothing.
 function planDay(foods, opts, lp) {
+  const q = opts && opts.quality != null ? opts.quality : QUALITY, bf = !!(opts && opts.breakfast);
+  const run = (qq, bb) => { const r = planStyled(foods, Object.assign({}, opts, { quality: qq, breakfast: bb }), lp); r.quality = qq; r.breakfast = bb; return r; };
+  const fine = (x) => x.ok && !x.closest && !x.overBudget && !x.budgetShort;
+  const usable = (x) => x.ok && !x.closest && !x.overBudget;
+  // 1) the full rules; a short budget may loosen quality a step at a time, but only for a real protein gain
+  let best = run(q, bf);
+  for (const qq of [0.5, 0.35].filter(v => v < q)) {
+    if (fine(best)) break;
+    const r = run(qq, bf);
+    if (fine(r) || (usable(r) && (!usable(best) || r.totals.p >= best.totals.p * 1.1))) best = r;
+  }
+  // 2) a budget too small to even cover the calories: the amount of protein matters most, so the rules may go
+  if (usable(best) && best.budgetSoft) {
+    const r = run(0, false);
+    if (usable(r) && r.totals.p >= best.totals.p * 1.1) best = r;
+  }
+  // 3) nothing workable at all: drop quality, then the breakfast rule
+  if (!usable(best)) for (const [qq, bb] of [[0, bf], [0, false]]) {
+    const r = run(qq, bb);
+    if (usable(r) || (r.ok && !best.ok)) { best = r; if (usable(r)) break; }
+  }
+  best.qualityRelaxed = best.quality < q; best.breakfastRelaxed = bf && !best.breakfast;
+  return best;
+}
+function planStyled(foods, opts, lp) {
   const style = (opts && opts.style) || "cheap";
   const r = planCore(foods, Object.assign({}, opts, { style }), lp);
   if (style === "cheap") return r;
@@ -130,7 +170,7 @@ function planCore(foods, opts, lp) {
     budget: 200, protein: 120, kcal: 2200, kcalTol: 0.07, fatMax: null, fatMinShare: 0.2, kitchen: true,
     diet: "nonveg", stores: ["Blinkit", "Zepto", "Licious", "Brand store"], exclude: [], gear: DEFAULT_GEAR,
     have: { p: 0, kcal: 0, c: 0, f: 0 }, include: [], style: "cheap",
-    carbs: null, fat: null, macroTol: 0.1, prices: {}, penalty: {}, keep: [],   // optional carbs / fat targets in grams (null = no target)   // include: [{ id, g }] foods the person wants every day
+    carbs: null, fat: null, macroTol: 0.1, quality: QUALITY, breakfast: false, prices: {}, penalty: {}, keep: [],   // optional carbs / fat targets in grams (null = no target)   // include: [{ id, g }] foods the person wants every day
   }, opts);
   const allowDiet = { veg: ["veg"], egg: ["veg", "egg"], nonveg: ["veg", "egg", "nonveg"] }[o.diet];
   let pool = foods.filter(f => allowDiet.includes(f.diet) && o.stores.includes(f.store) && !o.exclude.includes(f.id)
@@ -170,6 +210,9 @@ function planCore(foods, opts, lp) {
     if (needF == null) c.fatShare = { min: 0 };
     if (o.fatMax != null) c.fat = { max: Math.max(0, o.fatMax) };
     if (withBudget) c.budget = { max: o.budget };
+    // Most of the day's protein (mess food counts as ordinary protein) from complete sources
+    if (o.quality > 0) c.quality = { min: o.quality * o.have.p };
+    if (o.breakfast) { c.bfBase = { min: 50 }; c.bfProt = { min: 12 }; }
     for (const f of pool) {
       const v = { cost: priceOf(f) / f.packQty * st.weight(f) * (o.penalty[f.id] || 1), budget: priceOf(f) / f.packQty, protein: f.p, kcal: f.kcal, fat: f.f,
         fatShare: 9 * f.f - o.fatMinShare * f.kcal, carbs: f.c, fatT: f.f };
@@ -177,6 +220,8 @@ function planCore(foods, opts, lp) {
       if (maxP) v.score = 100 * f.p - v.cost;
       if (PULSE.test(f.name) && ["Soya & dal", "Grains & atta"].includes(f.cat) && !/atta$|wheat|khapli|multigrain/i.test(f.name)) v.pulse = 1;
       v["cat:" + f.cat] = 1;
+      if (o.quality > 0) v.quality = f.p * ((hq(f) ? 1 : 0) - o.quality);
+      if (o.breakfast) { if (BF_BASE(f)) v.bfBase = 1; if (BF_PROT(f)) v.bfProt = f.p; }
       if (!(f.cat in CAT_MAX)) { v["item:" + f.id] = 1; c["item:" + f.id] = { max: 100 }; }
       if (/soya/i.test(f.name) && f.cat === "Soya & dal") { v.soya = 1; }
       if (["Chicken", "Fish & seafood", "Mutton"].includes(f.cat)) v.meat = 1;
@@ -311,25 +356,38 @@ function planCore(foods, opts, lp) {
   // A few grams aren't worth a pack: drop them (it moves the totals by a few kcal). Part-cups and
   // part-bottles become whole ones when that still fits the budget, otherwise they're dropped.
   let spent = items.reduce((s, it) => s + it.cost, 0);
+  // First drop crumbs (so their cost frees up budget), then settle part-cups and part-bottles,
+  // the most protein first, so rounding up spends the budget where it matters.
+  const settle = (it, g) => { spent += (g - it.grams) * priceOf(it.food) / it.food.packQty; it.grams = g; it.cost = g * priceOf(it.food) / it.food.packQty; };
   items = items.filter(it => {
     const f = it.food;
-    if (it.picked) return true;
-    if (keepIds.has(f.id)) {
-      if (counted(f)) {
-        const up = Math.ceil(it.grams / f.unit.g - 0.05) * f.unit.g, extra = (up - it.grams) * priceOf(f) / f.packQty;
-        const g2 = spent + extra <= o.budget + 0.5 ? up : Math.max(f.unit.g, Math.floor(it.grams / f.unit.g + 0.05) * f.unit.g);
-        spent += (g2 - it.grams) * priceOf(f) / f.packQty; it.grams = g2; it.cost = g2 * priceOf(f) / f.packQty;
-      }
-      return true;
-    }
-    if (!counted(f)) return it.grams >= 10;
-    const u = it.grams / f.unit.g, r = Math.round(u);
-    if (Math.abs(u - r) <= 0.05 && r >= 1) { it.grams = r * f.unit.g; it.cost = it.grams * priceOf(f) / f.packQty; return true; }
-    const up = Math.max(1, Math.ceil(u - 0.05)), extra = (up * f.unit.g - it.grams) * priceOf(f) / f.packQty;
-    if (u >= 0.5 && spent + extra <= o.budget + 0.5) { spent += extra; it.grams = up * f.unit.g; it.cost += extra; return true; }
-    if (u >= 1) { it.grams = Math.floor(u) * f.unit.g; it.cost = it.grams * priceOf(f) / f.packQty; return true; }
-    return it.grams * f.p >= 2;   // a sip that adds under 2 g protein is dropped; something the plan really leans on stays
+    if (it.picked || keepIds.has(f.id) || counted(f)) return true;
+    if (it.grams >= 10) return true;
+    spent -= it.cost; return false;
   });
+  const parts = items.filter(it => !it.picked && counted(it.food)).sort((a, b) => b.food.p * b.grams - a.food.p * a.grams);
+  const gone = new Set();
+  // tiny part-cups that can't be rounded up are let go first, so their cost doesn't block the rest
+  for (const it of parts) {
+    const ug = it.food.unit.g, u = it.grams / ug;
+    if (!keepIds.has(it.food.id) && u < 0.35 && it.grams * it.food.p < 2) { spent -= it.cost; gone.add(it); }
+  }
+  for (const it of parts) {
+    if (gone.has(it)) continue;
+    const f = it.food, ug = f.unit.g;
+    if (keepIds.has(f.id)) {
+      const up = Math.ceil(it.grams / ug - 0.05) * ug, extra = (up - it.grams) * priceOf(f) / f.packQty;
+      settle(it, spent + extra <= o.budget + 0.5 ? up : Math.max(ug, Math.floor(it.grams / ug + 0.05) * ug));
+      continue;
+    }
+    const u = it.grams / ug, r = Math.round(u);
+    if (Math.abs(u - r) <= 0.05 && r >= 1) { settle(it, r * ug); continue; }
+    const up = Math.max(1, Math.ceil(u - 0.05)), extra = (up * ug - it.grams) * priceOf(f) / f.packQty;
+    if (u >= 0.35 && spent + extra <= o.budget + 0.5) { settle(it, up * ug); continue; }
+    if (u >= 1) { settle(it, Math.floor(u) * ug); continue; }
+    if (it.grams * f.p < 2) { spent -= it.cost; gone.add(it); }   // a sip that adds under 2 g protein is dropped; something the plan really leans on stays
+  }
+  items = items.filter(it => !gone.has(it));
   items.sort((a, b) => b.food.p * b.grams - a.food.p * a.grams);
   const sum = (fn) => items.reduce((s, it) => s + fn(it), 0);
   const totals = {
@@ -338,6 +396,7 @@ function planCore(foods, opts, lp) {
     c: sum(it => it.grams * it.food.c) + (o.have.c || 0),
     f: sum(it => it.grams * it.food.f) + (o.have.f || 0),
     kcal: sum(it => it.grams * it.food.kcal) + o.have.kcal,
+    hq: sum(it => hq(it.food) ? it.grams * it.food.p : 0),
   };
   // Weekly shop: whole packs needed for 7 days
   const week = items.map(it => {
@@ -384,4 +443,4 @@ function planWeek(foods, opts, lp) {
   return { ok: true, A, B, days, same: B === A, week, weekCost: week.reduce((s, w) => s + w.cost, 0), eatenCost: week.reduce((s, w) => s + w.eatenCost, 0) };
 }
 
-if (typeof module !== "undefined") module.exports = { planDay, planWeek, normalizeUnits, CAT_MAX, STYLE, needs, canMake, howTo };
+if (typeof module !== "undefined") module.exports = { planDay, planWeek, normalizeUnits, CAT_MAX, STYLE, needs, canMake, howTo, hq, QUALITY };
