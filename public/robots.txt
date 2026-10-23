@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://macro-budget.pages.dev/sitemap.xml
+Sitemap: https://macrava.pages.dev/sitemap.xml
