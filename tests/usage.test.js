@@ -12,9 +12,9 @@ const evs = (store) => store.usage.map(u => u.event);
     { const store = makeStore(); const p = await newDevice(b, store);
       await p.addInitScript((st) => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', 1); localStorage.setItem('mbp', JSON.stringify(st)); } }, PLAN);
       await p.goto(APP); await wait(300);
-      ok(evs(store).join() === 'open', 'open counted on start (got ' + evs(store) + ')');
+      ok(evs(store).length === 0, 'just loading the page counts nothing (got ' + evs(store) + ')');
       await p.click('#guest'); await wait(700);
-      ok(evs(store).includes('plan'), 'plan counted when the plan shows');
+      ok(evs(store).includes('open') && evs(store).includes('plan'), 'first tap counts open, and the plan is counted when it shows (' + evs(store) + ')');
       await p.click('.tick-btn'); await wait(200); await p.click('.tick-btn'); await wait(200); await p.click('.tick-btn'); await wait(200);
       ok(evs(store).filter(e => e === 'tick').length === 1, 'tick counted once a day');
       // Food preferences: the ticked food is recorded once a day, with its id and name only
@@ -42,7 +42,7 @@ const evs = (store) => store.usage.map(u => u.event);
       ok(store.usage.length === before, 'reload the same day: nothing sent again');
       // next day: counted again
       await p.evaluate(() => { const s = JSON.parse(localStorage.getItem('mbp_seen')); s.d = '2000-01-01'; localStorage.setItem('mbp_seen', JSON.stringify(s)); });
-      await p.reload(); await wait(400);
+      await p.reload(); await wait(400); await p.mouse.click(5, 5); await wait(300);
       ok(evs(store).filter(e => e === 'open').length === 2, 'new day: open counted again');
       ok(p.errors.length === 0, 'no errors ' + p.errors.join('|'));
       await p.context().close(); }
@@ -51,8 +51,10 @@ const evs = (store) => store.usage.map(u => u.event);
     { const store = makeStore(); store.offline = true; const p = await newDevice(b, store);
       await p.goto(APP); await wait(500);
       ok(store.usage.length === 0, 'offline: nothing recorded');
-      store.offline = false; await p.reload(); await wait(500);
-      ok(evs(store).join() === 'open', 'back online: open sent on next start');
+      await p.mouse.click(5, 5); await wait(300);
+      ok(store.usage.length === 0, 'offline: nothing recorded');
+      store.offline = false; await p.reload(); await wait(500); await p.mouse.click(5, 5); await wait(300);
+      ok(evs(store).join() === 'open', 'back online: open sent on the next visit');
       ok(p.errors.length === 0, 'offline: no errors ' + p.errors.join('|'));
       await p.context().close(); }
 
@@ -61,6 +63,20 @@ const evs = (store) => store.usage.map(u => u.event);
       await p.addInitScript(() => localStorage.setItem('mbp', JSON.stringify({ diet: 'egg', kitchen: true, place: 'home', step: 4, city: 'Pune', budget: 200, name: 'Asha' })));
       await p.goto(APP); await wait(1200);
       ok(evs(store).includes('account'), 'signed-in open counts account');
+      await p.context().close(); }
+    // Robots and the owner's own devices are not counted
+    { const store = makeStore(); const p = await newDevice(b, store);
+      await p.addInitScript(() => { window.__mbpCheckRobots = true; });
+      await p.goto(APP); await wait(400); await p.mouse.click(5, 5); await p.keyboard.press('Tab'); await wait(300);
+      ok(store.usage.length === 0, 'robot browser (webdriver / headless): nothing counted');
+      await p.context().close(); }
+    { const store = makeStore(); const p = await newDevice(b, store);
+      await p.goto(APP + '?nocount=1'); await wait(400); await p.mouse.click(5, 5); await wait(300);
+      ok(store.usage.length === 0 && !/nocount/.test(p.url()), 'own device (?nocount=1): nothing counted, link tidied');
+      await p.reload(); await wait(400); await p.mouse.click(5, 5); await wait(300);
+      ok(store.usage.length === 0, 'own device stays uncounted after a reload');
+      await p.goto(APP + '?nocount=0'); await wait(400); await p.mouse.click(5, 5); await wait(300);
+      ok(evs(store).join() === 'open', '?nocount=0 counts the device again');
       await p.context().close(); }
   } finally { await b.close(); }
   done();
