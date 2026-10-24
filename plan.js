@@ -106,8 +106,8 @@ const STYLE = {
   balanced: { weight: (f) => STAPLE(f) ? 1.6 : NICE(f) ? 0.85 : 1, catMax: 150, liquidMax: 350,
               tighter: { "Grains & atta": 150, "Bread": 100, "Snacks": 30, "Soya & dal": 120, "Eggs": 150 } },
   // Tasty: uses more of the budget on dairy, eggs, chicken, bars and shakes
-  tasty:    { weight: (f) => STAPLE(f) ? 2.5 : NICE(f) ? 0.6 : 1, catMax: 150, liquidMax: 350,
-              tighter: { "Grains & atta": 120, "Bread": 100, "Soya & dal": 80, "Eggs": 150 } },
+  tasty:    { weight: (f) => /sattu/i.test(f.name) ? 4 : STAPLE(f) ? 2.5 : NICE(f) ? 0.55 : 1, catMax: 150, liquidMax: 400,
+              tighter: { "Grains & atta": 120, "Bread": 100, "Soya & dal": 50, "Eggs": 150, "Snacks": 30 } },
 };
 const LIQUID_CATS = ["Milk", "Curd", "Yogurt", "Protein shake", "Dairy drink"];
 
@@ -125,15 +125,16 @@ function planDay(foods, opts, lp) {
     const r = run(qq, bf);
     if (fine(r) || (usable(r) && (!usable(best) || r.totals.p >= best.totals.p * 1.1))) best = r;
   }
-  // 2) a budget too small to even cover the calories: the amount of protein matters most, so the rules may go
-  if (usable(best) && best.budgetSoft) {
-    const r = run(0, false);
-    if (usable(r) && r.totals.p >= best.totals.p * 1.1) best = r;
-  }
-  // 3) nothing workable at all: drop quality, then the breakfast rule
+  // 2) nothing workable at all: drop quality, then the breakfast rule
   if (!usable(best)) for (const [qq, bb] of [[0, bf], [0, false]]) {
     const r = run(qq, bb);
     if (usable(r) || (r.ok && !best.ok)) { best = r; if (usable(r)) break; }
+  }
+  // 3) a budget far too small (it can't cover the calories, or quality costs a quarter of the protein):
+  //    the amount of protein matters most, so the rules may go
+  if (usable(best) && best.budgetShort && (best.quality > 0 || best.breakfast)) {
+    const r = run(0, false);
+    if (usable(r) && r.totals.p >= best.totals.p * (best.budgetSoft ? 1.1 : 1.25)) best = r;
   }
   best.qualityRelaxed = best.quality < q; best.breakfastRelaxed = bf && !best.breakfast;
   return best;
@@ -144,6 +145,7 @@ function planStyled(foods, opts, lp) {
   if (style === "cheap") return r;
   // If the nicer style can't reach what the cheapest plan reaches, fall back and say so.
   const rank = (x) => !x.ok ? 3 : x.closest ? 2 : (x.overBudget || x.budgetShort) ? 1 : 0;
+  if (r.ok && !r.closest && !r.overBudget && !r.budgetShort) return r;   // the chosen style fits: nothing to compare
   const base = planCore(foods, Object.assign({}, opts, { style: "cheap" }), lp);
   if (rank(r) > rank(base)) {
     // What the chosen style would cost with no budget limit, so the app can offer to raise the budget
@@ -196,7 +198,25 @@ function planCore(foods, opts, lp) {
   const st = STYLE[o.style] || STYLE.cheap;
   const fixed = {};   // id -> exact grams, set while tidying the plan into whole units
   // maxP = the targets don't fit the budget: get as much protein as the budget allows instead
+  const wholeUnits = (f) => f.unit && f.unit.name !== "scoop";
+  let unitVar = {};
+  // solve, then turn whole-piece counts back into grams
+  // Only pieces the plan actually uses in part need whole-number search, so solve plainly first and
+  // ask for whole pieces just where they come out fractional (much faster than searching all of them).
+  const solve = (model) => {
+    const want = model.ints || {}; model.ints = {};
+    let r = lp.Solve(model);
+    for (let round = 0; round < 4 && r.feasible; round++) {
+      const frac = Object.keys(want).filter(k => r[k] != null && Math.abs(r[k] - Math.round(r[k])) > 1e-6 && !model.ints[k]);
+      if (!frac.length) break;
+      for (const k of frac) model.ints[k] = 1;
+      r = lp.Solve(model);
+    }
+    for (const id in unitVar) if (r["x" + id] != null) r["x" + id] *= unitVar[id];
+    return r;
+  };
   const build = (withBudget, soft, maxP) => {
+    unitVar = {};
     const model = maxP ? { optimize: "score", opType: "max", constraints: {}, variables: {} }
                        : { optimize: "cost", opType: "min", constraints: {}, variables: {} };
     const c = model.constraints;
@@ -249,6 +269,16 @@ function planCore(foods, opts, lp) {
     c.salty = { max: SALTY_MAX };
     c.pulse = { max: PULSE_MAX };
     c.meat = { max: Math.max(MEAT_MAX, forcedBy(f => ["Chicken", "Fish & seafood", "Mutton"].includes(f.cat))) };
+    // Eggs, cups, bottles and bars are bought whole: the solver counts them in whole pieces
+    // (amounts the person picked or that must stay stay in grams)
+    model.ints = {};
+    model.options = { tolerance: 0.03, timeout: 400 };   // a near-best whole-piece plan is fine; don't keep a phone busy
+    for (const f of pool) {
+      if (!wholeUnits(f) || incIds.has(f.id) || keepIds.has(f.id) || fixed[f.id] != null) continue;
+      const v = model.variables["x" + f.id];
+      for (const k in v) v[k] *= f.unit.g;
+      model.ints["x" + f.id] = 1; unitVar[f.id] = f.unit.g;
+    }
     return model;
   };
 
@@ -256,13 +286,13 @@ function planCore(foods, opts, lp) {
   // to the shopping list, and re-solve while the plan stays feasible.
   const solveClean = (withBudget, soft, maxP) => {
     const mode = [withBudget, soft, !!maxP];
-    let res = lp.Solve(build(withBudget, soft, maxP));
+    let res = solve(build(withBudget, soft, maxP));
     for (let pass = 0; pass < 4 && res.feasible; pass++) {
       const tiny = Object.keys(res).filter(k => k[0] === "x" && res[k] > 1e-6 && res[k] < 15).map(k => +k.slice(1)).filter(id => !incIds.has(id) && !keepIds.has(id));
       if (!tiny.length) break;
       const keep = pool;
       pool = pool.filter(f => !tiny.includes(f.id));
-      const next = lp.Solve(build(withBudget, soft, maxP));
+      const next = solve(build(withBudget, soft, maxP));
       if (!next.feasible) { pool = keep; break; }
       res = next;
     }
@@ -327,7 +357,7 @@ function planCore(foods, opts, lp) {
     for (const g of optsSorted) {
       const keepPool = pool;
       if (g === 0) pool = pool.filter(f => f.id !== is.id); else fixed[is.id] = g;
-      const next = lp.Solve(build(mode[0], mode[1], mode[2]));
+      const next = solve(build(mode[0], mode[1], mode[2]));
       if (next.feasible) { next._mode = mode; res = next; break; }
       pool = keepPool; delete fixed[is.id];
     }
@@ -340,7 +370,7 @@ function planCore(foods, opts, lp) {
     while (ids.length > 1) {
       const id = ids.shift(), keepPool = pool, fx = fixed[id];
       pool = pool.filter(f => f.id !== id); delete fixed[id];
-      const next = lp.Solve(build(mode[0], mode[1], mode[2]));
+      const next = solve(build(mode[0], mode[1], mode[2]));
       if (next.feasible) { next._mode = mode; res = next; } else { pool = keepPool; if (fx != null) fixed[id] = fx; }
     }
   }
@@ -366,18 +396,19 @@ function planCore(foods, opts, lp) {
     spent -= it.cost; return false;
   });
   const parts = items.filter(it => !it.picked && counted(it.food)).sort((a, b) => b.food.p * b.grams - a.food.p * a.grams);
-  const gone = new Set();
+  const gone = new Set(), dropped = [];
   // tiny part-cups that can't be rounded up are let go first, so their cost doesn't block the rest
   for (const it of parts) {
     const ug = it.food.unit.g, u = it.grams / ug;
-    if (!keepIds.has(it.food.id) && u < 0.35 && it.grams * it.food.p < 2) { spent -= it.cost; gone.add(it); }
+    if (!keepIds.has(it.food.id) && u < 0.35 && it.grams * it.food.p < 2) { spent -= it.cost; gone.add(it); }   // a sip: no real loss
   }
   for (const it of parts) {
     if (gone.has(it)) continue;
     const f = it.food, ug = f.unit.g;
     if (keepIds.has(f.id)) {
       const up = Math.ceil(it.grams / ug - 0.05) * ug, extra = (up - it.grams) * priceOf(f) / f.packQty;
-      settle(it, spent + extra <= o.budget + 0.5 ? up : Math.max(ug, Math.floor(it.grams / ug + 0.05) * ug));
+      const down = Math.floor(it.grams / ug + 0.05) * ug;
+      if (spent + extra <= o.budget + 0.5) settle(it, up); else if (down > 0) settle(it, down); else { spent -= it.cost; gone.add(it); dropped.push(f.id); }
       continue;
     }
     const u = it.grams / ug, r = Math.round(u);
@@ -385,7 +416,7 @@ function planCore(foods, opts, lp) {
     const up = Math.max(1, Math.ceil(u - 0.05)), extra = (up * ug - it.grams) * priceOf(f) / f.packQty;
     if (u >= 0.35 && spent + extra <= o.budget + 0.5) { settle(it, up * ug); continue; }
     if (u >= 1) { settle(it, Math.floor(u) * ug); continue; }
-    if (it.grams * f.p < 2) { spent -= it.cost; gone.add(it); }   // a sip that adds under 2 g protein is dropped; something the plan really leans on stays
+    spent -= it.cost; gone.add(it); dropped.push(f.id);   // a part-cup or part-bottle you can't buy on its own is let go
   }
   items = items.filter(it => !gone.has(it));
   items.sort((a, b) => b.food.p * b.grams - a.food.p * a.grams);
@@ -398,6 +429,12 @@ function planCore(foods, opts, lp) {
     kcal: sum(it => it.grams * it.food.kcal) + o.have.kcal,
     hq: sum(it => hq(it.food) ? it.grams * it.food.p : 0),
   };
+  // Letting part-cups go can leave the plan short of protein: plan again without those foods (twice at most)
+  const target = o.have.p + needP;
+  if (dropped.length && !budgetShort && !closest && totals.p < target - 3 && (o._again || 0) < 2) {
+    const again = planCore(foods, Object.assign({}, opts, { exclude: [...o.exclude, ...dropped], _again: (o._again || 0) + 1 }), lp);
+    if (again.ok && again.totals.p > totals.p) return again;
+  }
   // Weekly shop: whole packs needed for 7 days
   const week = items.map(it => {
     const packs = Math.max(1, Math.ceil((it.grams * 7) / it.food.packQty - 1e-6));
