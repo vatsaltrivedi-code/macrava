@@ -1634,6 +1634,7 @@ __PLAN__
               ? `Your protein, carbs and fat also don't add up to ${fmt(t.kcal)} kcal (fix below). Closest plan for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`
               : `₹${S.budget} can't cover ${fmt(t.kcal)} kcal${t.carbs != null || t.fat != null ? " with your carbs and fat" : ""} either. This is the most you can get for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`)
             : `The most you can get for ₹${S.budget} is <b>${Math.round(T.p)} g protein</b> in ${fmt(T.kcal)} kcal (${fmt(T.c)} g carbs, ${fmt(T.f)} g fat). That's the plan below.`}
+          ${p.styleRelaxed ? `<br>${p.styleRelaxed === "tasty" ? "Tasty" : "Balanced"} would give you less protein on ₹${S.budget}, so you're seeing the plan with the most protein. Raise the budget to unlock it.` : ""}
           <div class="fix">
             ${p.needCost != null ? `<button type="button" class="btn-sm" id="fixBudget" data-v="${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)}">Raise budget to ₹${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)} for ${t.protein} g</button>` : ""}
             ${p.budgetSoft ? "" : `<button type="button" class="btn-sm ghosty" id="fixProtein" data-v="${Math.max(30, Math.floor(T.p / 5) * 5)}">Keep ₹${S.budget}: set protein to ${Math.max(30, Math.floor(T.p / 5) * 5)} g</button>`}
