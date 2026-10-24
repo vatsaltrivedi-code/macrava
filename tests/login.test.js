@@ -18,7 +18,7 @@ const text = (p) => p.evaluate(() => document.body.innerText);
 
     // 2. Google sign-in, new account -> Finish setup -> diet step
     { const store = makeStore(); const p = await newDevice(b, store); await p.goto(APP); await wait(300);
-      ok(/Continue with Google/.test(await text(p)) && /Continue with email/.test(await text(p)) && !/login link/i.test(await text(p)), 'welcome shows Google + Continue with email');
+      ok(await vis(p, '#guest') && /Make my free plan/.test(await text(p)) && await vis(p, '#google') && await vis(p, '#emailMode') && !/login link/i.test(await text(p)), 'welcome: free plan first, then Google and email sign-in');
       await p.click('#google'); ok((await p.evaluate(() => window.__fakeCalls)).includes('google'), 'Google button calls cloud.google');
       await store.signIn(p, A); await wait(400);
       ok(await p.$eval('#aName', e => e.value).catch(() => null) === 'Asha K', 'Finish setup pre-fills name');
