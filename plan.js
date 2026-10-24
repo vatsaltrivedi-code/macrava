@@ -151,9 +151,9 @@ function planStyled(foods, opts, lp) {
     const styleNeed = free.ok && !free.closest && !free.budgetShort ? free.totals.cost : null;
     return Object.assign(base, { styleRelaxed: style, styleNeed });
   }
-  // On a short budget the point is the most protein; don't let the style cost protein
+  // On a short budget the point is the most protein; don't let the style cost much protein
   // (but quote the chosen style's price for the full target, so raising the budget unlocks both)
-  if (r.budgetShort && base.budgetShort && base.totals.p > r.totals.p + 3) {
+  if (r.budgetShort && base.budgetShort && base.totals.p > r.totals.p * 1.05 + 1) {   // a style may cost up to ~5% of the protein
     const free = planCore(foods, Object.assign({}, opts, { style, budget: 1e6 }), lp);
     const styleNeed = free.ok && !free.closest ? free.totals.cost : null;
     return Object.assign(base, { styleRelaxed: style, needCost: Math.max(styleNeed || 0, r.needCost || 0, base.needCost || 0) || null });
