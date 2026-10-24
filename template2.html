@@ -1532,9 +1532,22 @@ __PLAN__
       try { const s2 = JSON.parse(ls("mbp_seen") || "{}"); if (s2.d === day) { s2.e = (s2.e || []).filter(x => x !== key); lsSet("mbp_seen", JSON.stringify(s2)); } } catch (e) {}
     });
   }
-  const track = (event) => onceToday(event, () => cloud.usage(deviceId(), event));
+  // Count real people only: not search-engine robots or test browsers, and not the owner's own devices
+  // (open macrava.pages.dev/?nocount=1 once on a device to stop counting it; ?nocount=0 to count it again)
+  try {
+    const nc = new URLSearchParams(location.search).get("nocount");
+    if (nc === "1" || nc === "0") { lsSet("mbp_nocount", nc === "1" ? "1" : null); const u = new URL(location.href); u.searchParams.delete("nocount"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
+  } catch (e) {}
+  const ROBOT = /bot|crawl|spider|slurp|lighthouse|headless|inspectiontool|preview|facebookexternalhit|whatsapp|bingpreview/i;
+  const robot = () => !!navigator.webdriver || ROBOT.test(navigator.userAgent || "");
+  const countable = () => ls("mbp_nocount") !== "1" && (!robot() || (TESTING && !window.__mbpCheckRobots));   // test browsers are robots too; tests opt in to that check
+  const track = (event) => { if (!countable()) return; if (event !== "open") trackOpen(); onceToday(event, () => cloud.usage(deviceId(), event)); };
+  // "open" is counted on the first tap, key press or scroll, so a page that's only loaded (by a robot or a preview) doesn't count
+  let opened = false;
+  function trackOpen() { if (opened) return; opened = true; track("open"); }
+  ["pointerdown", "keydown", "touchstart", "scroll"].forEach(ev => window.addEventListener(ev, trackOpen, { once: true, passive: true, capture: true }));
   // Food preferences: which foods get eaten, swapped out and swapped in (food ID + name only)
-  const trackFood = (event, f) => { if (f && Number.isInteger(f.id) && f.name) onceToday(`${event}:${f.id}`, () => cloud.food(deviceId(), event, f.id, f.name)); };
+  const trackFood = (event, f) => { if (countable() && f && Number.isInteger(f.id) && f.name) onceToday(`${event}:${f.id}`, () => cloud.food(deviceId(), event, f.id, f.name)); };
   let swapBefore = null;   // today's foods just before a swap, to see what the new plan brings in
   function proCard(feature) {
     track("pro");
@@ -2119,7 +2132,7 @@ __PLAN__
     if (u && !currentUser && !signingIn && !loggedOut && S.step < 0) afterSignIn(u);
     else if (u && currentUser) retry();   // e.g. token refreshed once the network is back
   });
-  const boot = () => { track("open"); if (cloud.enabled) startAuth(); else render(); };
+  const boot = () => { if (cloud.enabled) startAuth(); else render(); };
   if (document.readyState === "complete") boot(); else window.addEventListener("load", boot);
 })();
 </script>
