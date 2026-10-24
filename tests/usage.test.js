@@ -12,9 +12,9 @@ const evs = (store) => store.usage.map(u => u.event);
     { const store = makeStore(); const p = await newDevice(b, store);
       await p.addInitScript((st) => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', 1); localStorage.setItem('mbp', JSON.stringify(st)); } }, PLAN);
       await p.goto(APP); await wait(300);
-      ok(evs(store).length === 0, 'just loading the page counts nothing (got ' + evs(store) + ')');
+      ok(evs(store).join() === 'open', 'opening the site counts open (got ' + evs(store) + ')');
       await p.click('#guest'); await wait(700);
-      ok(evs(store).includes('open') && evs(store).includes('plan'), 'first tap counts open, and the plan is counted when it shows (' + evs(store) + ')');
+      ok(evs(store).includes('plan'), 'plan counted when the plan shows');
       await p.click('.tick-btn'); await wait(200); await p.click('.tick-btn'); await wait(200); await p.click('.tick-btn'); await wait(200);
       ok(evs(store).filter(e => e === 'tick').length === 1, 'tick counted once a day');
       // Food preferences: the ticked food is recorded once a day, with its id and name only
