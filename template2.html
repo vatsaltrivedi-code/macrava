@@ -254,7 +254,23 @@ ul.pl-list li:first-child { border-top: 0; }
 .undo { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); padding-top: 10px; }
 .link { background: none; border: 0; color: var(--accent); font-weight: 600; cursor: pointer; padding: 4px 0; font-size: 14px; }
 
-.welcome { padding-top: 10vh; }
+.welcome { padding-top: 2vh; }
+.w-top { display: flex; align-items: center; gap: 12px; }
+.w-pill { font-size: 12.5px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 6px 10px; border-radius: 999px; }
+.w-demo { border: 1px solid var(--hair); background: var(--surface); border-radius: 16px; padding: 14px 16px; margin: 4px 0 18px; }
+.w-demo-h { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+.w-demo-h span + span { text-transform: none; letter-spacing: 0; font-weight: 500; }
+.w-demo-n { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 8px; }
+.w-demo-n div { display: flex; flex-direction: column; }
+.w-demo-n b { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+.w-demo-n div:first-child b { color: var(--accent); }
+.w-demo-n span { font-size: 12px; color: var(--muted); }
+.w-demo-l { list-style: none; margin: 6px 0 0; padding: 8px 0 0; border-top: 1px solid var(--hair); display: grid; gap: 6px; font-size: 14px; }
+.w-demo-l i { font-style: normal; display: inline-block; width: 24px; }
+.w-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12.5px; margin-top: 6px; }
+.w-or::before, .w-or::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+.w-signin { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.w-signin .ghost { margin-top: 0; }
 .w-mark { width: 56px; height: 56px; display: block; }
 .welcome h1 { font-size: clamp(34px, 9vw, 44px); }
 .welcome .q-sub { margin-top: -12px; }
@@ -946,15 +962,21 @@ __PLAN__
     if (authMode === "setup") return finishSetup();
     if (authMode === "home") {
       screen.innerHTML = `<section class="step welcome">
-        <svg class="w-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#e8590c"/><path d="M10 33H54a22 19 0 0 1-44 0Z" fill="#fff"/><rect x="23" y="51.5" width="18" height="4" rx="2" fill="#fff"/><rect x="20" y="22" width="6.5" height="9" rx="3.25" fill="#fff" opacity=".6"/><rect x="28.75" y="17" width="6.5" height="14" rx="3.25" fill="#fff" opacity=".8"/><rect x="37.5" y="10" width="6.5" height="21" rx="3.25" fill="#fff"/></svg>
+        <div class="w-top"><span class="w-pill">🇮🇳 Free for hostel &amp; PG students</span></div>
         <h1>Hit your protein on any budget.</h1>
-        <p class="q-sub">Tell us what you eat and what you can spend. We'll find the cheapest food that gets you there, from Blinkit and Zepto.</p>
-        <div class="auth-btns">
-          ${cloud.enabled ? `<button type="button" class="cta gbtn" id="google">${G_LOGO}Continue with Google</button>
-          <button type="button" class="ghost" id="emailMode">Continue with email</button>` : ""}
-          <button type="button" class="${cloud.enabled ? "link guest" : "cta"}" id="guest">Try without an account</button>
+        <p class="q-sub">Tell us your budget and what you eat. Macrava finds the cheapest food to hit your protein, with real Blinkit, Zepto &amp; Licious prices and your mess meals counted.</p>
+        <div class="w-demo" aria-label="Example plan">
+          <div class="w-demo-h"><span>Example plan</span><span>veg · hostel · no cooking</span></div>
+          <div class="w-demo-n"><div><b>130 g</b><span>protein</span></div><div><b>₹198</b><span>a day</span></div><div><b>50%</b><span>top-quality</span></div></div>
+          <ul class="w-demo-l"><li><i>☀️</i>Curd, oats &amp; bread for breakfast</li><li><i>🍽️</i>Mess lunch &amp; dinner, counted</li><li><i>🥤</i>Protein shake &amp; a snack</li></ul>
         </div>
-        ${cloud.enabled ? `<p class="fine-note">Signing in keeps your plan on all your devices. Without an account it stays on this one.</p>` : ""}
+        <div class="auth-btns">
+          <button type="button" class="cta" id="guest">${cloud.enabled ? "Make my free plan" : "Try without an account"} →</button>
+          <p class="fine-note">30 seconds · no sign-up needed</p>
+          ${cloud.enabled ? `<div class="w-or"><span>or sign in to keep your plan on all devices</span></div>
+          <div class="w-signin"><button type="button" class="ghost gbtn" id="google">${G_LOGO}Google</button>
+          <button type="button" class="ghost" id="emailMode">Email</button></div>` : ""}
+        </div>
         <p class="fine-note legal"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p></section>`;
       const g = $("#google"); if (g) g.addEventListener("click", async () => {
         g.disabled = true; loggedOut = false; lsSet("mbp_loggedout", null);
