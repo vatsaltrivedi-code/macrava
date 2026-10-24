@@ -25,6 +25,15 @@ const share = (p) => p.totals.hq / p.totals.p;
   ok(p.ok && p.totals.p >= 80 && p.totals.cost <= 60.5, 'tiny budget: still as much protein as the money buys (' + Math.round(p.totals.p) + ' g)');
   p = plan({ budget: 150, protein: 112, kcal: 2720, diet: 'egg', kitchen: false, gear: {} }, 2);
   ok(p.ok && p.totals.p >= 108 && p.totals.cost <= 150.5, 'hostel, no gear, ₹150: target met after rounding cups and bottles (' + Math.round(p.totals.p) + ' g, ₹' + Math.round(p.totals.cost) + ')');
+  // The three styles give different plans (hostel, veg, no gear, ₹200), all meeting the target within budget
+  const ids = {};
+  for (const st of ['cheap', 'balanced', 'tasty']) {
+    const r = plan({ budget: 200, protein: 130, kcal: 2500, diet: 'veg', kitchen: false, gear: {}, style: st }, 2);
+    ids[st] = r.items.map(it => it.food.id).sort().join();
+    ok(r.ok && r.totals.p >= 125 && r.totals.cost <= 200.5, st + ': ' + Math.round(r.totals.p) + ' g for ₹' + Math.round(r.totals.cost));
+    ok(r.items.every(it => !it.food.unit || it.food.unit.name === 'scoop' || Math.abs(it.grams / it.food.unit.g - Math.round(it.grams / it.food.unit.g)) < 0.01), st + ': cups, bottles and eggs are whole');
+  }
+  ok(new Set(Object.values(ids)).size === 3, 'Cheapest, Balanced and Tasty are three different plans');
   // App: breakfast is a base plus a protein food, never snacks; the quality line shows
   build(null);
   const b = await chromium.launch();
