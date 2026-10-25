@@ -1,7 +1,9 @@
 """Build macro-budget-planner.html from template2.html, data, plan.js and vendor/*.js.
 Optional config.json: {"supabaseUrl": "...", "supabaseKey": "...", "cfBeacon": "..."} (publishable values only).
 cfBeacon is the Cloudflare Web Analytics token; when set, the beacon is added to the app and to pages/*.html copies in dist/."""
-import json, pathlib
+import json, pathlib, sys
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import add_more as more   # products checked later (data/*_more_*.txt, data/eatclub_*.txt)
 d = pathlib.Path(__file__).resolve().parent
 r = lambda n: (d / n).read_text(encoding="utf-8")
 safe = lambda t: t.replace("</", "<\\/")
@@ -12,8 +14,8 @@ s = (s.replace("__SOLVER__", safe(r("vendor/solver.js")))
       .replace("__SUPABASE__", safe(r("vendor/supabase.js")))
       .replace("__SUPA_URL__", safe(json.dumps(url)))
       .replace("__SUPA_KEY__", safe(json.dumps(key)))
-      .replace("__FOODS__", safe(r("foods.json")))
-      .replace("__REST__", safe(r("rest.json")))
+      .replace("__FOODS__", safe(json.dumps(more.more_foods(json.loads(r("foods.json"))), ensure_ascii=False, separators=(",", ":"))))
+      .replace("__REST__", safe(json.dumps(more.more_rest(json.loads(r("rest.json"))), ensure_ascii=False, separators=(",", ":"))))
       .replace("__PLAN__", r("plan.js"))
       .replace("__GLOGO__", "data:image/svg+xml;base64," + __import__("base64").b64encode((d / "vendor/google-g.svg").read_bytes()).decode()))
 beacon = str(cfg.get("cfBeacon", ""))
