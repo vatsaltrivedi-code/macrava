@@ -317,6 +317,8 @@ form.auth { display: grid; gap: 14px; }
 form.auth, .fld { min-width: 0; }
 .fine-note a { color: inherit; }
 .pw-show { flex: none; padding: 0 14px; border-radius: 14px; border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); font: 600 14px var(--font); cursor: pointer; }
+.update-bar { position: fixed; left: 50%; top: calc(12px + env(safe-area-inset-top)); transform: translateX(-50%); display: flex; align-items: center; gap: 12px; max-width: calc(100% - 32px); background: var(--ink); color: var(--surface); font-size: 13.5px; padding: 8px 8px 8px 16px; border-radius: 999px; z-index: 60; box-shadow: 0 6px 24px rgba(0,0,0,.25); white-space: nowrap; }
+.update-bar button { border: 0; background: var(--accent); color: var(--on-accent); font: 600 13px var(--font); padding: 7px 14px; border-radius: 999px; cursor: pointer; }
 .sync-note { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--ink); color: var(--surface); font-size: 13px; padding: 8px 14px; border-radius: 999px; z-index: 50; text-align: center; }
 .sync-note[hidden] { display: none; }
 .swap-auth { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
@@ -929,6 +931,40 @@ __PLAN__
   showInstall();
   // Offline support (and needed for installing): only on the real site, never in tests
   if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost") && !TESTING) navigator.serviceWorker.register("/sw.js").catch(() => {});
+  // Live updates: an open app checks for a new version (every minute, and whenever you come back to it).
+  // It refreshes itself when you're not using it (tab hidden, or idle and not typing), and keeps you on the same screen.
+  // Otherwise a small bar offers the update. BUILD is filled in by the deploy; local and test copies don't check.
+  const BUILD = (TESTING && window.__mbpBuild) || "__BUILD__";
+  if (!BUILD.startsWith("__")) {
+    let newBuild = false, lastAct = Date.now(), checking = false;
+    const IDLE = (TESTING && window.__mbpIdleMs) || 20000;
+    ["pointerdown", "keydown", "touchstart", "wheel"].forEach(ev => addEventListener(ev, () => { lastAct = Date.now(); }, { passive: true, capture: true }));
+    const typing = () => { const a = document.activeElement; return !!a && (/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName) && a.type !== "range" || a.isContentEditable); };
+    const safe = () => !typing() && (document.visibilityState === "hidden" || Date.now() - lastAct > IDLE);
+    const reloadNow = () => {
+      try { sessionStorage.setItem("mbp_resume", JSON.stringify({ step: S.step, guest: S.guest, tab, y: Math.round(scrollY) })); } catch (e) {}
+      location.reload();
+    };
+    const showUpdate = () => {
+      if (document.getElementById("updateBar")) return;
+      const d = document.createElement("div"); d.id = "updateBar"; d.className = "update-bar"; d.setAttribute("role", "status");
+      d.innerHTML = `<span>Macrava just got better</span><button type="button">Refresh</button>`;
+      d.querySelector("button").addEventListener("click", reloadNow); document.body.appendChild(d);
+    };
+    const check = async () => {
+      if (newBuild) { if (safe()) reloadNow(); return; }
+      if (checking || !navigator.onLine) return; checking = true;
+      try {
+        const r = await fetch("/version.json?t=" + Date.now(), { cache: "no-store" });
+        const v = r.ok ? (await r.json()).v : null;
+        if (v && v !== BUILD) { newBuild = true; if (safe()) reloadNow(); else showUpdate(); }
+      } catch (e) {} finally { checking = false; }
+    };
+    setInterval(check, (TESTING && window.__mbpCheckMs) || 60000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") check(); else if (newBuild && !typing()) reloadNow(); });
+    addEventListener("focus", check);
+    addEventListener("online", check);
+  }
   function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); }
 
   function chrome() {
@@ -2233,6 +2269,14 @@ __PLAN__
   // Every visit starts on the welcome / log-in screen. Saved answers are kept, so logging in
   // (or "Try it without an account") goes straight back to the plan.
   S.step = -1; S.name = null; S.guest = false;
+  // Came back from an automatic update: carry on where you were (signed-in people are taken back by sign-in)
+  let resumed = null;
+  try { resumed = JSON.parse(sessionStorage.getItem("mbp_resume") || "null"); sessionStorage.removeItem("mbp_resume"); } catch (e) {}
+  if (resumed) {
+    if (resumed.guest && resumed.step >= 0 && (resumed.step < 4 || hasPlan())) { S.guest = true; S.step = resumed.step; }
+    if (["day", "shop", "out"].includes(resumed.tab)) tab = resumed.tab;
+    if (resumed.y > 0) setTimeout(() => window.scrollTo(0, resumed.y), 900);
+  }
   // The old "account" was only an email typed on this device; real sign-in replaces it (the plan is kept)
   try { localStorage.removeItem("mbp_user"); } catch (e) {}
   cloud.onChange((u) => {
