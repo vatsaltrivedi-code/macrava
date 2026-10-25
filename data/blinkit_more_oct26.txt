@@ -1,0 +1,81 @@
+# Blinkit, DLF Cyber City Gurugram, 26 Oct 2026. id|name|pack|price|protein|kcal|carbs|fat (per 100 g/ml as listed)|serve|diet
+1|Nutrela Soya Mini Chunks|200 g|46|53.2|354|33.5|0.8||v
+2|Nutrela Soya Chunks|200 g|45|53.2|354|33.5|0.8||v
+3|Nutrela Soya Granules|200 g|51|53.2|354|33.5|0.8|25 g|v
+4|Fortune Soya Chunks|200 g|47|52.9|316|31.7|0.9|20 g|v
+166|Sundrop Creamy Peanut Butter|462 g|138|25|637|18.8|52.4|30 g|v
+179|Amul Gold Milk|1 ltr|83|3|71|4.7|4.5|200 mL|v
+183|Sofit Natural Soy Beverage|1 ltr|146|3.2|34|1.8|1.6||v
+192|Mother Dairy Paneer|200 g|100|18|271|2.5|21|20 g|v
+196|Mother Dairy Mango Lassi|180 ml|20|1.8|76|13.5|1.7|180 ml|v
+205|Bajaj S.K. White Protein Rich Eggs|10 pcs|170|12.6|147|0.8|9.9|100 g|egg
+605|Haldiram's Classic Salted Peanuts|200 g|65|26|610|18.5|48|20 g|v
+15351|Sundrop Regular Crunchy Peanut Butter|462 g|138|26|619|22.7|48|30 g|v
+15933|Harvest Gold Multigrain Bread|450 g|75|10.3|264|46.5|4|50 g|v
+19803|Jabsons Roasted Peanut Namkeen Tandoori|140 g|78|20|630|21|52|30 g|v
+21624|Amul Sweet Lassi Tetra Pack|250 ml|25|2|87|14.0|2.0|100 ml|v
+24194|Harvest Gold Hearty Brown Bread|400 g|60|8.3|217|43.7|1|50 g|v
+28201|Mother Dairy Spiced Salted Buttermilk|180 ml|15|1.2|24|1.9|1.3|180 ml|v
+28204|Mother Dairy Strawberry Lassi|180 ml|20|1.9|78|13.5|1.8|180 ml|v
+28207|Mother Dairy Refreshing Sweet Lassi|180 ml|20|2|82|13.9|1|180 ml|v
+32685|Mother Dairy Toned Milk|1 ltr|77|3|59|4.8|3.1|200 ml|v
+34778|Amul Moti Toned Milk (90 Days Shelf Life)|450 ml|33|3|58|4.8|3|200 mL|v
+37173|Nestle a+ ActiPlus Dahi Low-fat Cup Curd|380 g|85|3.1|44|5.2|1.5|90 g|v
+41997|Ananda Premium Paneer|200 g|105|18.5|309|2.5|25||v
+52680|Fortune Soya Granules|200 g|47|52.9|316|31.7|0.9|20 g|v
+68553|Amul Mango Lassi|1 ltr|96|2.2|87|14.5|2.2||v
+74690|Nestle a+ Slim Skimmed Milk|1 ltr|99|3|34|5|0.2|200 ml|v
+78062|Morinaga Silken Extra Firm Tofu|308 g|399|8.2|59|2.4|1.8|85 g|v
+91100|Bikaji Nut Cracker Coated Peanut Namkeen|150 g|52|22|615|26|47|40 g|v
+98708|Epigamia Strawberry Flavoured Yogurt|85 g|60|6.2|89|11.8|1.6|85 g|v
+101875|Mooz Non-GMO Soya Tofu|200 g|110|14.2|140|4.5|2.9|100 g|v
+103916|Jabsons Roasted Peanut Namkeen Nimboo Pudina|140 g|80|20|630|21|52|30 g|v
+111387|Pro Plant Premium Tofu|200 g|53|18|150|1.6|7.9||v
+127022|Bikano Classic Salted Peanuts|200 g|62|24|566|17.9|44.1|30 g|v
+127889|Mooz Vegetable Tofu|200 g|120|15|137|8|5|50 g|v
+132232|Epigamia Alphonso Mango Flavoured Greek Yogurt|85 g|60|6|92|12.9|1.8|85 g|v
+132233|Epigamia Wild Raspberry Flavoured Greek Yogurt|85 g|60|6.1|93|11|1.6|85 g|v
+138836|Nestle a+ Toned Milk|1 ltr|112|3.1|60|5|3.1|200 g|v
+159879|Jabsons Roasted Salted Peanuts Classic|160 g|70|25|652|21|52|30 g|v
+294982|Epigamia Blueberry Flavoured Yogurt|85 g|60|6.2|99|14|1.9|85 g|v
+383249|Nestle a+ Slim Skimmed Milk (Pack of 2)|2 x 1 ltr|189|3|34|5|0.2|200 ml|v
+391896|Diet Tofu Soya Tofu|200 g|54|14.2|112|7.3|2.9||v
+394016|Diet Tofu Masala Tofu|100 g|35|14.2|112|7.3|1||v
+423857|Mother Dairy Malai Paneer|200 g|105|15.5|324|2.5|28|20 g|v
+442662|Saffola Mealmaker Soya Chunks|200 g|55|53|312|30.2|1|25 g|v
+444825|MyFitness High Protein Chocolate Peanut Butter Smooth|510 g|281|28|628|17.5|49.6|32 g|v
+445425|So Good High Protein Plant Based Soy Beverage|1 ltr|141|5|40|1.2|1.7|200 ml|v
+457039|The Whole Truth Coconut Cocoa Protein Bar|52 g|110|23.5|487|38.3|26.5|52 g|v
+457042|The Whole Truth Double Cocoa Protein Bar|52 g|110|25.6|492|37.7|26.5|52 g|v
+464420|FruBon Double Toned Pouch Curd|1 kg|80|3|47|5|1.5|100 g|v
+477481|Eggoz White Protein Rich Eggs|6 pcs|92|13|154|0|10.9||egg
+477482|Eggoz White Protein Rich Eggs|10 pcs|161|13.5|150|1|10.6||egg
+477797|Epigamia Lactose Free Cup Curd|400 g|100|3|64|5|3.5|100 g|v
+478895|Country Delight Taaza Paneer|180 g|115|15.5|283|2.5|23.4|90 g|v
+480293|Amul Creamy Spread Peanut Butter|300 g|100|26|624|20|50|30 g|v
+480555|Omay Foods Roasted Soyabean (Protein Rich)|160 g|76|46.8|465|30.2|17.5|25 g|v
+481210|The Whole Truth Crunchy Peanut Spread with Dates|325 g|220|24.2|637|22|50.3|35 g|v
+481211|The Whole Truth Crunchy Unsweetened Peanut Butter|325 g|198|25|651|17.7|53.4|35 g|v
+481293|Pride of Cows Cup Curd|320 g|99|3.8|71|6|3|100 g|v
+484008|MyFitness High Protein Chocolate Crunchy Peanut Butter|510 g|281|26.8|635|23.7|48.1|32 g|v
+487769|Epigamia Natural Greek Yogurt (Pack of 3)|3 x 85 g|178|7|68|4.7|2.2|85 g|v
+490545|Crax Double Mazza Roasted Chana Peanuts|160 g|39|26.1|566|34.6|35.9|30 g|v
+498145|Licious Brown Eggs|6 pcs|123|13|152|0.5|10.9||egg
+498774|Taali Roasted Nimbu Pudina Peanuts|140 g|54|23|643|18|53|35 g|v
+502721|Agapi Strawberry Protein Yogurt|100 g|60|7|91|11|1.7|100 g|v
+502723|Agapi Natural Greek Yogurt|100 g|60|9|76|5.2|2|100 g|v
+503417|The Whole Truth 20 g Protein Bar Double Cocoa|67 g|174|30.3|502|31.9|28.1|67 g|v
+504969|Amul Rose Lassi|200 ml|25|2|88|14.5|2.1|200 ml|v
+518800|The Whole Truth 20 g Protein Bar Coffee Cocoa (Pack of 2)|2 x 67 g|339|30.3|510|32.1|29|67 g|v
+519389|Optimum Nutrition Gold Standard 100% Whey (Double Rich Chocolate)|152 g|999|79|383|10|3|30.4 g|v
+523581|Mother Dairy Rabri Lassi|180 ml|20|2.7|115|19|3.1||v
+526253|Nestle a+ Dahi Thick & Creamy Cup Curd|380 g|80|3|58|4.5|3|90 g|v
+538435|MyFitness All Natural Crunchy Peanut Butter (Unsweetened)|510 g|281|31.4|637|19.4|48.2|32 g|v
+546826|Jabsons Bharuchi Khari Sing Rock Salt Peanuts|200 g|100|24|630|20|51|30 g|v
+554596|RiteBite Max Protein Choco Almond 30 g Protein Bar|100 g|196|30|361|44.7|14.7|100 g|v
+557477|Licious White Protein Rich Eggs|12 pcs|164|13|152|0.5|10.9||egg
+568265|Amul Pouch Curd|700 g|50|3|53|3.5|3|100 g|v
+656249|Epigamia Blueberry Greek Yogurt (Pack of 3)|3 x 85 g|207|6.5|67|5.9|2|85 g|v
+676876|Amul Probiotic Cup Curd|1 kg|115|4|65|4.6|3.1|100 g|v
+729067|Taali Khari Sing Roasted Jumbo Peanuts|200 g|76|24|630|18|50|35 g|v
+793110|Country Delight 25 g High Protein Cow Milk|250 ml|79|10|85|4|3.2|250 ml|v
