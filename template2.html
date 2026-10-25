@@ -370,6 +370,20 @@ li.ate .n { text-decoration: line-through; color: var(--muted); }
 .eaten b small { font-size: 13px; color: var(--muted); font-weight: 500; }
 .eaten .bar { grid-column: 1 / -1; height: 6px; background: var(--hair); border-radius: 3px; overflow: hidden; }
 .eaten .bar i { display: block; height: 100%; background: var(--accent); transition: width .3s; }
+.eaten.done { border-color: var(--accent); background: var(--accent-soft); }
+.eaten .bar { height: 8px; border-radius: 4px; }
+.e-streak { justify-self: end; font-size: 13px; font-weight: 600; color: var(--ink) !important; background: var(--accent-soft); padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.e-streak.off { color: var(--muted) !important; background: transparent; border: 1px solid var(--hair); }
+.e-msg { grid-column: 1 / -1; font-size: 13.5px; color: var(--muted); }
+.e-msg b { font-size: inherit; color: var(--ink); }
+.e-week { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-top: 4px; }
+.e-day { display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; color: var(--muted); }
+.e-day i { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--hair); display: block; background: conic-gradient(var(--accent) calc(var(--f, 0) * 1turn), transparent 0); }
+.e-day.hit i { border-color: var(--accent); background: var(--accent); }
+.e-day.today span { color: var(--ink); font-weight: 700; }
+.nudge { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px dashed var(--hair); border-radius: 14px; padding: 10px 12px; font-size: 13.5px; margin-top: 10px; }
+.nudge span { flex: 1; }
+.nudge .x { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
 .hint-sm { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
 .people { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .loc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: var(--muted); }
@@ -499,7 +513,7 @@ __PLAN__
     ["milk", "Milk", "glass", { p: 6, kcal: 120, c: 10, f: 6 }],
   ];
   const PLATE_BY = new Map(PLATE.map(x => [x[0], x]));
-  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false }, plates: {} };
+  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false }, plates: {}, log: {} };
   const FOOD_BY_KEY = new Map(FOODS.map(f => [f.key, f]));
   const CITY_LIST = ["Delhi NCR", "Bengaluru", "Mumbai", "Pune", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad",
     "Jaipur", "Chandigarh", "Lucknow", "Indore", "Bhopal", "Dehradun", "Other"];
@@ -561,6 +575,12 @@ __PLAN__
           if (Object.keys(q).length) (o.plates[d] = o.plates[d] || {})[meal] = q;
         }
       }
+    }
+    // Daily protein eaten [grams, target] for the streak and the week dots (last 120 days)
+    if (raw.log && typeof raw.log === "object" && !Array.isArray(raw.log)) {
+      const ok = Object.entries(raw.log).filter(([d, v]) => /^\d{4}-\d{2}-\d{2}$/.test(d) && Array.isArray(v) && v.length === 2 && v.every(n => Number.isFinite(Number(n))))
+        .sort((a, b) => a[0] < b[0] ? 1 : -1).slice(0, 120);
+      o.log = {}; for (const [d, v] of ok) o.log[d] = [Math.min(1000, Math.max(0, Math.round(Number(v[0])))), Math.min(1000, Math.max(0, Math.round(Number(v[1]))))];
     }
     if (raw.ate && typeof raw.ate === "object") {
       for (const [d, list] of Object.entries(raw.ate)) {
@@ -662,6 +682,12 @@ __PLAN__
     };
   }
   // Device copy vs account copy: the newer whole plan wins, but eaten-ticks and own prices from both are kept.
+  // Days logged on either device are kept; for a day logged on both, the bigger count wins
+  function mergeLog(a, b) {
+    const out = Object.assign({}, a || {});
+    for (const [d, v] of Object.entries(b || {})) if (!out[d] || v[0] > out[d][0]) out[d] = v.slice();
+    return out;
+  }
   function mergeState(local, remote) {
     const lt = local.updatedAt || 0, rt = remote.updatedAt || 0;
     const base = lt >= rt ? local : remote, other = base === local ? remote : local;
@@ -674,6 +700,7 @@ __PLAN__
       const mine = out.myPrices[k];
       if (!mine || (v.d || "") > (mine.d || "")) out.myPrices[k] = Object.assign({}, v);
     }
+    out.log = mergeLog(local.log, remote.log);
     out.updatedAt = Math.max(lt, rt);
     return out;
   }
@@ -684,7 +711,7 @@ __PLAN__
     const clone = (v) => v === undefined ? v : JSON.parse(JSON.stringify(v));
     const localWins = (local.updatedAt || 0) >= (remote.updatedAt || 0);
     const out = clone(local);
-    const skip = new Set(["step", "name", "guest", "updatedAt", "ate", "myPrices"]);
+    const skip = new Set(["step", "name", "guest", "updatedAt", "ate", "myPrices", "log"]);
     for (const k of new Set([...Object.keys(local), ...Object.keys(remote)])) {
       if (skip.has(k)) continue;
       const l = local[k], r = remote[k], b = base[k];
@@ -709,6 +736,7 @@ __PLAN__
       else v = !l ? r : !r ? l : ((r.d || "") > (l.d || "") ? r : l);
       if (v) out.myPrices[k] = clone(v);
     }
+    out.log = mergeLog(local.log, remote.log);
     out.updatedAt = Math.max(local.updatedAt || 0, remote.updatedAt || 0);
     return out;
   }
@@ -1898,6 +1926,30 @@ __PLAN__
           ? ` To make it up, add about <b>${qty({ food: best.food, grams: g }).replace("<small>", " ").replace("</small>", "")} ${esc(best.food.name)}</b> (≈₹${fmt(best.cost / best.grams * g)}).` : ""}</p>`;
       } else if (isToday && plateGap >= 4) gapNote = `<p class="gap-note good">Your mess food had about ${fmt(plateGap)} g more protein than the plan expected.</p>`;
       outItems().forEach((o, i) => { if (ate.has("out:" + i)) eaten += o.r.p; });
+      // Daily log for the streak: what you ate today against your target
+      const goal = targets().protein;
+      if (isToday) {
+        const lg = Object.assign({}, S.log || {});
+        if (eaten > 0) lg[today] = [Math.round(eaten), goal]; else delete lg[today];
+        const changed = JSON.stringify(lg) !== JSON.stringify(S.log || {});
+        S.log = lg; if (changed) save();
+      }
+      const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+      const logged = (n) => ((S.log || {})[dayKey(n)] || [0])[0] > 0;
+      let streak = 0; for (let n = logged(0) ? 0 : 1; logged(n); n++) streak++;
+      const pct = Math.round(eaten / goal * 100), left = Math.max(0, goal - eaten);
+      const week = [6, 5, 4, 3, 2, 1, 0].map(n => { const v = (S.log || {})[dayKey(n)], f = v && v[1] ? Math.min(1, v[0] / v[1]) : 0;
+        const d = new Date(); d.setDate(d.getDate() - n);
+        return `<div class="e-day${f >= 1 ? " hit" : ""}${n === 0 ? " today" : ""}" title="${v ? fmt(v[0]) + " of " + fmt(v[1]) + " g" : "Nothing ticked"}"><i style="--f:${f.toFixed(2)}"></i><span>${n === 0 ? "Today" : d.toLocaleDateString("en-IN", { weekday: "narrow" })}</span></div>`; }).join("");
+      const msg = eaten <= 0 ? (streak ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : "Tick a food when you eat it to start your streak.")
+        : eaten >= goal ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
+      const showNudge = isToday && eaten > 0 && !standalone() && (installEvt || isIOS) && !ls("mbp_nudge_off");
+      const eatenCard = `<div class="eaten${eaten >= goal ? " done" : ""}"><span>Eaten today</span><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
+          <b>${fmt(eaten)} <small>of ${goal} g protein</small></b><span>${Math.min(999, pct)}%</span>
+          <div class="bar"><i style="width:${Math.min(100, eaten / goal * 100)}%"></i></div>
+          <p class="e-msg">${msg}</p>
+          <div class="e-week" aria-label="Last 7 days">${week}</div></div>
+          ${showNudge ? `<div class="nudge"><span>Add Macrava to your home screen so ticking takes one tap.</span><button type="button" class="btn-sm" id="nudgeAdd">Add</button><button type="button" class="x" id="nudgeX" aria-label="Hide this">×</button></div>` : ""}`;
       const sec = (meal) => {
         const mess = messRow(meal, messIn(meal));
         const body = rows[meal].map(r => foodRow(meal, r)).join("") + mess;
@@ -1917,8 +1969,7 @@ __PLAN__
       panel.innerHTML = `${daysRow}
         ${!isPro() ? `<p class="hint-sm">Today's cheapest plan. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
-        ${isToday ? `<div class="eaten"><span>Eaten today</span><b>${fmt(eaten)} <small>of ${targets().protein} g protein</small></b>
-          <div class="bar"><i style="width:${Math.min(100, eaten / targets().protein * 100)}%"></i></div></div>${gapNote}` : ""}
+        ${isToday ? eatenCard + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
         ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
@@ -1957,8 +2008,13 @@ __PLAN__
           if (it) trackFood("ate", it.food);
         }
         const i = list.indexOf(k); if (i >= 0) list.splice(i, 1); else list.push(k);
+        const before = eaten;
         save(); drawDay();
+        const after = ((S.log || {})[today] || [0])[0];
+        if (before < goal && after >= goal) toast("Goal hit! 🎉 Come back tomorrow to keep your streak.");
       }));
+      const na = $("#nudgeAdd"); if (na) na.addEventListener("click", () => $("#installBtn").click());
+      const nx = $("#nudgeX"); if (nx) nx.addEventListener("click", () => { lsSet("mbp_nudge_off", "1"); drawDay(); });
       panel.querySelectorAll(".swap[data-id]").forEach(b => b.addEventListener("click", () => {
         const it = dp.items.find(x => x.food.id === +b.dataset.id);
         if (it) { trackFood("swap_out", it.food); swapBefore = new Set(p.items.map(x => x.food.id)); }
