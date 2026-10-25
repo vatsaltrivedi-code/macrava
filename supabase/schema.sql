@@ -99,16 +99,19 @@ grant execute on function public.record_pro_interest(uuid, text, text, int) to a
 create table if not exists public.usage_events (
   device uuid not null,
   day date not null,
-  event text not null check (event in ('open', 'plan', 'tick', 'pro', 'account')),
+  event text not null check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share')),
   primary key (device, day, event)
 );
+-- Older databases: keep the allowed events in step with the app
+alter table public.usage_events drop constraint if exists usage_events_event_check;
+alter table public.usage_events add constraint usage_events_event_check check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share'));
 alter table public.usage_events enable row level security;
 revoke all on public.usage_events from anon, authenticated;
 
 create or replace function public.record_usage(p_device uuid, p_event text) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
-  if p_device is null or p_event not in ('open', 'plan', 'tick', 'pro', 'account') then
+  if p_device is null or p_event not in ('open', 'plan', 'tick', 'pro', 'account', 'share') then
     raise exception 'bad input';
   end if;
   -- A cap so a script can't fill the table
@@ -130,7 +133,8 @@ create or replace view public.usage_daily with (security_invoker = true) as
          count(distinct device) filter (where event = 'plan') as made_a_plan,
          count(distinct device) filter (where event = 'tick') as ticked_meals,
          count(distinct device) filter (where event = 'pro') as saw_pro,
-         count(distinct device) filter (where event = 'account') as signed_in
+         count(distinct device) filter (where event = 'account') as signed_in,
+         count(distinct device) filter (where event = 'share') as shared
   from public.usage_events group by day order by day desc;
 
 create or replace view public.usage_totals with (security_invoker = true) as
