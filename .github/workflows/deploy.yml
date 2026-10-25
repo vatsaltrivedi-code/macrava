@@ -28,6 +28,10 @@ jobs:
           cp dist/privacy.html dist/terms.html site/
           cp public/robots.txt public/sitemap.xml public/manifest.webmanifest public/sw.js public/icon.svg site/
           grep -q "sb_publishable_" site/index.html
+          # Version stamp: an open app compares this with its own and refreshes itself when a new one is live
+          echo "{\"v\":\"$GITHUB_SHA\"}" > site/version.json
+          sed -i "s/__BUILD__/$GITHUB_SHA/" site/index.html
+          grep -q "$GITHUB_SHA" site/index.html
       - name: Link preview image
         continue-on-error: true
         run: |
