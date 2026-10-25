@@ -1,0 +1,49 @@
+# EatClub WeFit (Guilt Free), DLF Cyber City Gurugram, 26 Oct 2026. name|kcal|protein|carbs|fat|price|diet  (price shown before coupon codes)
+Paneer Tikka Whole Bowl|987|50|51|65|262|veg
+Pesto & Paneer Supreme Bowl|1052|49|50|73|262|veg
+Paneer Peri Peri Power Bowl|974|50|52|63|262|veg
+Herb Chicken Mighty Bowl|686|64|47|27|262|nonveg
+Pesto & Chicken Dominator Bowl|776|63|46|38|262|nonveg
+Chicken Tikka Super Bowl|721|65|50|29|262|nonveg
+BBQ Chicken Beast Bowl|724|64|56|27|262|nonveg
+Chicken Peri Peri Boss Bowl|708|65|51|27|262|nonveg
+Veggie Delight Happy Salad|399|12|46|18|194|veg
+Pesto & Veggies Hearty Salad|310|8|20|22|194|veg
+Pesto & Mushroom Merry Salad|425|13|35|26|224|veg
+Paneer Peri Peri Bravo Salad|588|29|37|36|224|veg
+Pesto & Paneer FeelGood Salad|629|25|35|43|224|veg
+Chicken Peppy Salad|448|38|34|18|239|nonveg
+Pesto & Chicken Honest Salad|537|36|33|29|239|nonveg
+Pesto & Mushroom Keto Salad|347|12|25|22|224|veg
+Paneer Keto Salad|481|27|24|31|224|veg
+Pesto & Paneer Keto Salad|552|24|25|40|224|veg
+Chicken Keto Salad|371|36|24|14|239|nonveg
+Pesto & Chicken Keto Salad|460|35|23|22|239|nonveg
+Paneer Tikka Keto Bowl|826|47|30|57|262|veg
+Pesto & Paneer Keto Bowl|894|46|30|65|262|veg
+Paneer Peri Peri Keto Bowl|813|47|31|56|262|veg
+Herb Chicken Keto Bowl|525|61|26|19|262|nonveg
+Pesto & Chicken Keto Bowl|614|60|25|30|262|nonveg
+Chicken Peri Peri Keto Bowl|547|62|30|20|262|nonveg
+Chicken Tikka Keto Bowl|560|62|30|22|262|nonveg
+Veggie Goodness Sandwich|432|13|61|15|134|veg
+Pesto Mushrooms & Cheese Sandwich|586|23|59|29|179|veg
+Grilled Paneer Power Sandwich|583|25|60|27|179|veg
+Pesto Paneer & Cheese Sandwich|742|32|58|42|202|veg
+Overload Paneer Mighty Sandwich|684|32|62|34|202|veg
+Grilled Chicken Power Sandwich|516|33|60|16|187|nonveg
+Pesto Chicken & Cheese Sandwich|669|41|56|31|202|nonveg
+Overload Chicken Mighty Sandwich|576|44|61|17|202|nonveg
+Supergrain Millet Dal Khichdi|679|17|74|35|164|veg
+Fiber-Rich Palak & Millet Khichdi|777|19|82|41|172|veg
+Soulful Mix Veg Millet Khichdi|744|20|85|36|172|veg
+Tandoori Grilled Paneer Tikka (10 pcs)|624|40|13|46|224|veg
+Peri Peri Grilled Paneer Tikka (10 pcs)|611|40|13|44|224|veg
+Tandoori Grilled Chicken Wings (6 pcs)|558|46|14|35|202|nonveg
+Peri Peri Grilled Chicken Wings (6 pcs)|545|46|15|34|202|nonveg
+Herb Grilled Chicken Wings (6 pcs)|523|45|11|33|202|nonveg
+BBQ Grilled Chicken Wings (6 pcs)|562|45|20|33|202|nonveg
+Tandoori Grilled Chicken Tikka (6 pcs)|370|54|12|11|247|nonveg
+Peri Peri Grilled Chicken Boneless (6 pcs)|357|55|13|10|247|nonveg
+Herb Grilled Chicken Boneless (6 pcs)|335|54|9|9|247|nonveg
+BBQ Grilled Chicken Boneless (6 pcs)|374|54|18|10|247|nonveg
