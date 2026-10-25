@@ -32,7 +32,7 @@ const off = JSON.parse(fs.readFileSync(path.join(root, 'data/official_prices.jso
       const r = await p.evaluate(() => ({
         links: [...document.querySelectorAll('a.find')].map(a => a.getAttribute('href')),
         text: document.body.innerText }));
-      ok(r.links.length > 0 && r.links.every(h => /^https:\/\/(online\.kfc\.co\.in|www\.mcdonaldsindia\.com|www\.dominos\.co\.in|www\.pizzahut\.co\.in|www\.burgerking\.in)\//.test(h)), city + ': every link is a chain site (' + r.links.length + ')');
+      ok(r.links.length > 0 && r.links.every(h => /^https:\/\/(online\.kfc\.co\.in|www\.mcdonaldsindia\.com|www\.dominos\.co\.in|www\.pizzahut\.co\.in|www\.burgerking\.in|www\.eatclub\.in)\//.test(h)), city + ': every link is a chain site (' + r.links.length + ')');
       ok(!/swiggy/i.test(r.text), city + ': no Swiggy on screen');
       ok(/Order from /.test(r.text), city + ': "Order from <chain>" shown');
       const tilde = /~\s*₹|≈\s*₹|₹\s*\d+\s*~/.test(r.text);
