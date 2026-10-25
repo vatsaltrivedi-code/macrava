@@ -1,0 +1,70 @@
+# Zepto, DLF Cyber City Gurugram, 26 Oct 2026. id|name|pack|price|protein|kcal|carbs|fat (per 100 g/ml unless the name ends with [pack], then per pack)|serve|diet
+60cebf64|Pride Of Cows Paneer Pouch|200 g|179|18|287|2|23||v
+4e9252e5|Lotus Soft Paneer|200 g|89|18|303|3.7|24||v
+030e4b73|Heritage Fresh Paneer|200 g|100|16|274|3|22||v
+a2c96cc2|Desi Farms High Protein Paneer|200 g|135|25|171|2|7||v
+026503b1|Frubon Low Fat High Protein Paneer|200 g|119|24.5|173|4|6.5||v
+5b65d271|Lotus Malai Paneer|200 g|94|18|303|3.7|24||v
+0876c044|Desi Farms Buffalo Malai Paneer|200 g|114|13.1|334.6|7.5|28||v
+17769723|TOFUZY Tofu|200 g|57|17.13|151.49|3.18|7.46||v
+b4b2cac5|Bio Nutrients Pure Diet Soy Tofu Paneer|200 g|65|13.7|125.8|6.5|5||v
+1c9533a9|Hello Tempayy Natural Tempeh Cubes|200 g|109|21|178|10.1|6.8||v
+ad0b43bf|Hello Tempayy Tempeh Crumbles|200 g|97|21|178|10.1|6.8||v
+503cd776|Aashirvaad Mini Soya Chunks|200 g|48|53.2|324|34.9|0.34||v
+99bb7937|Aashirvaad Soya Chunks|200 g|41|53.2|324|34.9|0.34||v
+adfec33d|Fortune Soya Chunks|200 g|47|52.9|316|31.7|0.9||v
+f0e0ef4b|Saffola Mealmaker Soya Chunks|400 g|115|50|312|30.2|1||v
+de864791|Nutrela Soya Chunks|1 kg|140|53.19|354.14|33.5|0.82||v
+04023f5b|Fortune Mini Soya Chunks|200 g|44|52.9|316|31.7|0.9||v
+0460c342|Aravalli Soya Chunks|500 g|52|53|312|30.2|1||v
+539c4597|Nutrela Soya Chunks|200 g|46|53.19|354.14|33.5|0.82||v
+5ce3f299|Kedia Pavitra Mini Soya Chunks|500 g|81|52|345|33|0.5||v
+3b916808|Fortune Soya Granules|200 g|47|52.5|343|31.5|0.8||v
+d37a72a9|Nutrela Soya Granules|200 g|51|53.2|354.1|33.5|0.8||v
+e5c9c282|ZOFF Soya Chunks|1 kg|193|52|345|33|1||v
+eacffa26|Nutrela Mini Soya Chunks|200 g|43|53.1|354.1|33.5|0.8||v
+341bf8c5|Henfruit Max Protein Specialty Eggs|10 pcs|149|14.4|161|1|11.1||egg
+3eb75033|Urban White Eggs|30 pcs|250|12.48|150|1.02|10.86||egg
+3815500c|UPF Healthy White Eggs|6 pcs|104|13.2|168.2|4.5|10.8||egg
+68ad264c|Andaah Natural Vitamin D White Eggs|12 pcs|155|13.5|140|0.57|9||egg
+93837ce0|Henfruit Farm Fresh Eggs|30 pcs|406|14.3|150|1.1|9.9||egg
+0f4fbc80|Eggee Provita White Eggs|6 pcs|82|13.78|136.95|0.44|8.91||egg
+0c9a9bbf|Nature Good White Eggs|30 pcs|270|13.91|147.43|1.55|9.61||egg
+1e85e56b|Nature Good White Eggs|6 pcs|66|13.91|147|1.55|9.51||egg
+d4461518|Zeggss Organic White Eggs|10 pcs|136|13|142|0.7|9||egg
+60b4e3c1|Zeggss Organic White Eggs|6 pcs|87|13|142|0.7|9||egg
+c6896968|UPF The Good Egg Co. Cage Free Eggs|6 pcs|132|12.95|157.22|0.34|11.56||egg
+37486928|Frubon Hilo High Protein Low Fat Milk|500 ml|43|5.5|46|5.3|0.3||v
+b3533188|Amul Buffalo A2 Milk (Tetra Pack)|1 l|90|3.5|88|5|6||v
+da1d19dd|Mother Dairy Cow Milk Pouch|1 l|62|3.1|68|4.8|4.1||v
+5a0a55b9|Mother Dairy Double Toned Live Lite Milk Pouch|1 l|52|3.2|47|5.1|1.5||v
+4359adde|Nestle a+ Slim Milk (Tetra Pack)|1 l|99|3|34|5|0.2||v
+502db7d9|Amul Calci+ High Calcium Milk|1 l|98|4.5|58|6.5|1.5||v
+49d4d663|Mother Dairy Promilk Protein Milk|500 ml|36|4|79|6.5|4.1||v
+e3d82530|Epigamia Turbo Vanilla Caramel Protein Milkshake [pack]|250 ml|99|25|136|8|0.2||v
+65bbf7df|Epigamia Turbo Chocolate Protein Milkshake [pack]|250 ml|99|25|139|9|0.3||v
+29045b19|Phab Kulfi Caramel 10 g Protein Milkshake [pack]|200 ml|79|10|90.4|13.9|0.6||v
+4fe97006|Phab Cold Coffee 18 g Protein Milkshake [pack]|200 ml|115|18|138|8.9|3.9||v
+b1ca615f|Epigamia Turbo Cookies and Cream Protein Milkshake [pack]|250 ml|99|25|139|9|0.3||v
+d7c3e048|Phab Strawberries and Cream 18 g Protein Milkshake [pack]|200 ml|115|18|139|9|4||v
+9629c234|Phab Coffee Tiramisu 10 g Protein Milkshake [pack]|200 ml|79|10|90.6|14.1|0.6||v
+51e1b543|Mother Dairy Classic Curd Pouch|380 g|35|3.7|62|5|3||v
+20ea90c2|Frubon Yummy Dahi Pouch|1 kg|75|3.3|47|5|1.5||v
+cf83fdee|Amul Masti Dahi Pouch|1 kg|80|4|61.5|4.4|3.1||v
+0af6a1a5|Milky Mist Set Curd Tub|1 l|120|3.5|61.8|5.2|3||v
+48b5b095|Mother Dairy Classic Curd Pouch|1 kg|80|3.7|62|5|3||v
+d89c02eb|Desi Farms Low Fat Dahi Pouch|400 g|32|4|49|4.4|1.7||v
+bc16e539|Mother Dairy Classic Curd Cup|200 g|25|3.7|62|5|3||v
+61ae2733|Milky Mist Probiotic Curd Tub|1 kg|108|3.5|61.8|5.2|3||v
+b0e9defa|Country Delight Ghar Jaisa Dahi Cup|400 g|69|4|79|6.2|4.5||v
+51c1f355|Amul Masti Dahi Cup|200 g|25|4|65|4.6|3.1||v
+c3c7b54e|Amul Masti Dahi Cup|400 g|50|4|65|4.6|3.1||v
+3546cba8|Pride Of Cows Curd Cup|320 g|99|3.8|71|6|3||v
+bc19472c|Mother Dairy Dahi Ultimate Curd Cup|400 g|55|3.7|75|5|3||v
+cf8c88da|Amul Masti Set Curd Tub|1 kg|115|4|65|4.6|3.1||v
+9be59c65|Mother Dairy Nutrifit Probiotic Cup Curd|200 g|30|3.9|50|5.2|1.5||v
+05bf4ae2|Mother Dairy Nutrifit Probiotic Cup Curd|400 g|59|3.9|50|5.2|1.5||v
+6bf52672|Heritage Sampurna A2 Curd Tub|1 kg|139|3.6|90.4|5.5|6||v
+95fb899f|Country Delight Low Fat Dahi Pouch|400 g|59|3.7|69|5.4|3||v
+23a90a6f|Heritage Total Curd Tub|1 kg|105|3.3|58|4.3|3||v
+d511102d|Epigamia Natural Greek Yogurt [pack]|85 g|60|6.1|58|4|1.9||v
