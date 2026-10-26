@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Macrava · Hit your protein on any budget</title>
+<title>Macrava: Protein Meal Planner for Hostel &amp; PG Students</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23e8590c'/%3E%3Cpath d='M10 33H54a22 19 0 0 1-44 0Z' fill='%23fff'/%3E%3Crect x='23' y='51.5' width='18' height='4' rx='2' fill='%23fff'/%3E%3Crect x='20' y='22' width='6.5' height='9' rx='3.25' fill='%23fff' opacity='.6'/%3E%3Crect x='28.75' y='17' width='6.5' height='14' rx='3.25' fill='%23fff' opacity='.8'/%3E%3Crect x='37.5' y='10' width='6.5' height='21' rx='3.25' fill='%23fff'/%3E%3C/svg%3E">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#e8590c">
@@ -11,13 +11,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Macrava">
-<meta name="description" content="Free planner for hostel and PG students in India: hit your daily protein on any budget with foods from Blinkit, Zepto and Licious, counting your mess meals too.">
+<meta name="description" content="Free protein meal planner for hostel and PG students in India. Uses Blinkit and Zepto prices and counts your mess meals to hit your target on a budget.">
 <link rel="canonical" href="https://macrava.pages.dev/">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Macrava?", "acceptedAnswer": {"@type": "Answer", "text": "Macrava is a free web app that plans a day of food to hit your protein target within a fixed daily budget. It is made for students in Indian hostels and PGs."}}, {"@type": "Question", "name": "Where do the prices come from?", "acceptedAnswer": {"@type": "Answer", "text": "Grocery prices come from Blinkit and Zepto, collected in Gurugram. Prices change and can differ in your city, so you can edit any price in the app. Restaurant items use each chain’s published nutrition data and website prices."}}, {"@type": "Question", "name": "How does it count mess food?", "acceptedAnswer": {"@type": "Answer", "text": "Each mess meal is counted as roughly 15 g of protein and 650 kcal. That is an estimate, not a measurement, and your mess may differ. You can log what was on your plate for a better number."}}, {"@type": "Question", "name": "Can I use it without a kitchen?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You choose what you have: kettle, microwave, fridge, or no cooking. The plan only includes food that works with that setup."}}, {"@type": "Question", "name": "Does it care about protein quality?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. By default about 65% of your protein comes from high-quality sources such as dairy, eggs, soya, meat, fish and whey. If your budget cannot reach your target that way, the app lowers that share step by step so you still get a plan."}}, {"@type": "Question", "name": "Is Macrava free?", "acceptedAnswer": {"@type": "Answer", "text": "The daily plan is free for now. A paid Pro plan with weekly plans and shopping lists is planned, and the price is not decided yet."}}, {"@type": "Question", "name": "Is this medical advice?", "acceptedAnswer": {"@type": "Answer", "text": "No. Macrava is a food-planning tool and is not medical or dietary advice. If you have a health condition, talk to a doctor or dietitian."}}]}</script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Macrava">
 <meta property="og:url" content="https://macrava.pages.dev/">
-<meta property="og:title" content="Macrava: hit your protein on any budget">
-<meta property="og:description" content="Free meal planner for hostel &amp; PG students. Plans the cheapest way to hit your protein from Blinkit, Zepto and Licious, counting your mess food.">
+<meta property="og:title" content="Macrava: Protein Meal Planner for Hostel &amp; PG Students">
+<meta property="og:description" content="Plans the cheapest way to hit your daily protein from Blinkit, Zepto and Licious, counting your mess meals too.">
 <meta property="og:image" content="https://macrava.pages.dev/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -88,6 +89,11 @@ button { font: inherit; color: inherit; }
 
 /* Question steps */
 .step { flex: 1; display: flex; flex-direction: column; gap: 28px; padding-top: 8vh; animation: in .28s ease both; }
+.seo-intro { animation: none; gap: 12px; padding-top: 4vh; }
+.seo-intro h1 { font-size: 30px; line-height: 1.15; }
+.seo-intro h2 { font-size: 20px; margin-top: 16px; }
+.seo-intro h3 { font-size: 16px; margin-top: 8px; }
+.seo-intro p { color: var(--muted, #666); line-height: 1.5; margin: 0; }
 @keyframes in { from { opacity: .001; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 h1 { font-size: clamp(28px, 7vw, 36px); line-height: 1.1; letter-spacing: -0.03em; font-weight: 600; margin: 0; text-wrap: balance; }
 .q-sub { color: var(--muted); margin: -16px 0 0; font-size: 15px; }
@@ -465,7 +471,26 @@ try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") 
     </div>
   </div>
   <p class="install-tip" id="installTip" hidden>To install on iPhone: open this page in Safari, tap the <b>Share</b> button, then <b>Add to Home Screen</b>.</p>
-  <main id="screen"></main>
+  <main id="screen"><section class="step seo-intro">
+    <h1>Hit your daily protein on a hostel or PG budget</h1>
+    <p>Macrava plans a day of food around your protein target and your daily budget. It uses real Blinkit and Zepto prices, counts the meals you eat in your mess, and only suggests food you can make with the gear you have: a kettle, a microwave, a fridge, or no cooking at all.</p>
+    <p>Tell it your diet (veg, veg with eggs, or everything), where you live, how many mess meals you eat, and your budget. You get a plan for the day, with swaps, in a few taps. Free for now.</p>
+    <h2>Frequently asked questions</h2>
+    <h3>What is Macrava?</h3>
+    <p>Macrava is a free web app that plans a day of food to hit your protein target within a fixed daily budget. It is made for students in Indian hostels and PGs.</p>
+    <h3>Where do the prices come from?</h3>
+    <p>Grocery prices come from Blinkit and Zepto, collected in Gurugram. Prices change and can differ in your city, so you can edit any price in the app. Restaurant items use each chain’s published nutrition data and website prices.</p>
+    <h3>How does it count mess food?</h3>
+    <p>Each mess meal is counted as roughly 15 g of protein and 650 kcal. That is an estimate, not a measurement, and your mess may differ. You can log what was on your plate for a better number.</p>
+    <h3>Can I use it without a kitchen?</h3>
+    <p>Yes. You choose what you have: kettle, microwave, fridge, or no cooking. The plan only includes food that works with that setup.</p>
+    <h3>Does it care about protein quality?</h3>
+    <p>Yes. By default about 65% of your protein comes from high-quality sources such as dairy, eggs, soya, meat, fish and whey. If your budget cannot reach your target that way, the app lowers that share step by step so you still get a plan.</p>
+    <h3>Is Macrava free?</h3>
+    <p>The daily plan is free for now. A paid Pro plan with weekly plans and shopping lists is planned, and the price is not decided yet.</p>
+    <h3>Is this medical advice?</h3>
+    <p>No. Macrava is a food-planning tool and is not medical or dietary advice. If you have a health condition, talk to a doctor or dietitian.</p>
+  </section></main>
 </div>
 
 <script id="foods" type="application/json">__FOODS__</script>
