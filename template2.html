@@ -328,6 +328,19 @@ form.auth, .fld { min-width: 0; }
 .sync-note { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); max-width: calc(100% - 32px); background: var(--ink); color: var(--surface); font-size: 13px; padding: 8px 14px; border-radius: 999px; z-index: 50; text-align: center; }
 .sync-note[hidden] { display: none; }
 .swap-auth { text-align: center; color: var(--muted); font-size: 14px; margin: 0; }
+.site-foot { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--hair); text-align: center; color: var(--muted); font-size: 13px; }
+.site-foot[hidden] { display: none; }
+.sf-brand { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--ink); font-size: 15px; }
+.sf-brand svg { width: 22px; height: 22px; }
+.sf-tag { margin: 4px 0 14px; }
+.sf-social { display: flex; justify-content: center; gap: 12px; margin-bottom: 14px; }
+.sf-social a { display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border: 1px solid var(--hair); border-radius: 999px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 13.5px; }
+.sf-social a:hover { border-color: var(--muted); }
+.sf-social svg { width: 18px; height: 18px; }
+.sf-links { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 10px; }
+.sf-links a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+.sf-links a:hover { color: var(--ink); }
+.sf-copy { font-size: 12px; margin: 0; }
 .fine-note { text-align: center; color: var(--muted); font-size: 12.5px; margin: 0; }
 .legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
 .legal a:hover { color: var(--ink); }
@@ -491,6 +504,18 @@ try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") 
     <h3>Is this medical advice?</h3>
     <p>No. Macrava is a food-planning tool and is not medical or dietary advice. If you have a health condition, talk to a doctor or dietitian.</p>
   </section></main>
+  <footer class="site-foot" id="siteFoot">
+    <div class="sf-brand"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#e8590c"/><path d="M10 33H54a22 19 0 0 1-44 0Z" fill="#fff"/><rect x="23" y="51.5" width="18" height="4" rx="2" fill="#fff"/><rect x="20" y="22" width="6.5" height="9" rx="3.25" fill="#fff" opacity=".6"/><rect x="28.75" y="17" width="6.5" height="14" rx="3.25" fill="#fff" opacity=".8"/><rect x="37.5" y="10" width="6.5" height="21" rx="3.25" fill="#fff"/></svg>Macrava</div>
+    <p class="sf-tag">Protein plan on any budget, for hostel &amp; PG students.</p>
+    <div class="sf-social">
+      <a href="https://instagram.com/macrava.app" target="_blank" rel="noopener" aria-label="Macrava on Instagram"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.3" cy="6.7" r="1.2" fill="currentColor"/></svg>Instagram</a>
+      <a href="https://www.youtube.com/@Macrava-app" target="_blank" rel="noopener" aria-label="Macrava on YouTube"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="2" y="5" width="20" height="14" rx="4" fill="#ff0033"/><path d="M10 9v6l5-3z" fill="#fff"/></svg>YouTube</a>
+    </div>
+    <nav class="sf-links" aria-label="Footer">
+      <a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="mailto:gamezderister@gmail.com">Contact</a>
+    </nav>
+    <p class="sf-copy">© 2026 Macrava · Not medical advice</p>
+  </footer>
 </div>
 
 <script id="foods" type="application/json">__FOODS__</script>
@@ -1024,6 +1049,7 @@ __PLAN__
   function chrome() {
     const quiz = S.step >= 0 && S.step < 4;
     $("#dots").hidden = !quiz;
+    $("#siteFoot").hidden = quiz;
     [...$("#dots").children].forEach((d, i) => d.classList.toggle("on", i === S.step));
     $("#back").hidden = !(quiz && S.step > 0);
     $("#brand").hidden = quiz && S.step > 0;
@@ -1090,8 +1116,7 @@ __PLAN__
         <div class="auth-btns">
           <button type="button" class="cta wu" id="guest" style="animation-delay:2.6s">${cloud.enabled ? "Make my plan" : "Try without an account"} →</button>
           ${cloud.enabled ? `<p class="w-signin wu" style="animation-delay:2.75s">Have an account? Sign in with <button type="button" class="w-link" id="google">Google</button> or <button type="button" class="w-link" id="emailMode">email</button></p>` : ""}
-        </div>
-        <p class="fine-note legal wu" style="animation-delay:2.85s"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p></section>`;
+        </div></section>`;
       if (anim && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
         const count = (el, to, fmt) => { if (!el) return; el.textContent = fmt(0); setTimeout(() => { const t0 = performance.now();
           const f = (n) => { const t = Math.min(1, (n - t0) / 800); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - t, 3)))); if (t < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }, 2300); };
@@ -1844,7 +1869,6 @@ __PLAN__
         <p>Suggested targets use the Mifflin-St Jeor formula for calories you burn at rest, times your activity level, then 20% less to lose fat or 10% more to build muscle. Protein is 1.8–2.0 g per kg when building or cutting (within the 1.4–2.0 g/kg the International Society of Sports Nutrition suggests for active people, a little higher when cutting) and 1.0–1.6 g/kg to maintain; above a BMI of 25 it's counted on a healthy weight for your height. Fat is 25% of calories, carbs the rest. They're estimates for healthy adults, not medical advice; set your own anytime. Hostel plans, and PG plans without a kitchen, only use food you can make with what's in your room: eggs need a kettle or microwave, heat-and-eat packs a microwave, and chilled food a fridge unless it's a single cup or bottle you finish that day. A mess meal counts as about 15 g protein, 650 kcal, 95 g carbs and 22 g fat. Carbs and fat targets allow ±10%. Eggs count as 50 g each.</p>
         <p>Your plan alternates between two days so you're not eating the same food every day. Cups, bottles, eggs and bars are always whole, and fresh food is planned so it's finished before it goes off.</p>
       </details>
-      <p class="fine-note legal"><a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
       </div>
     </section>`;
 
@@ -1962,14 +1986,15 @@ __PLAN__
       const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
       const logged = (n) => ((S.log || {})[dayKey(n)] || [0])[0] > 0;
       let streak = 0; for (let n = logged(0) ? 0 : 1; logged(n); n++) streak++;
-      const pct = Math.round(eaten / goal * 100), left = Math.max(0, goal - eaten);
+      const hit = Math.round(eaten) >= goal;   // compare what we show: 125.6 g reads as 126 of 126
+      const pct = Math.round(eaten / goal * 100), left = Math.max(0, goal - Math.round(eaten));
       const week = [6, 5, 4, 3, 2, 1, 0].map(n => { const v = (S.log || {})[dayKey(n)], f = v && v[1] ? Math.min(1, v[0] / v[1]) : 0;
         const d = new Date(); d.setDate(d.getDate() - n);
         return `<div class="e-day${f >= 1 ? " hit" : ""}${n === 0 ? " today" : ""}" title="${v ? fmt(v[0]) + " of " + fmt(v[1]) + " g" : "Nothing ticked"}"><i style="--f:${f.toFixed(2)}"></i><span>${n === 0 ? "Today" : d.toLocaleDateString("en-IN", { weekday: "narrow" })}</span></div>`; }).join("");
       const msg = eaten <= 0 ? (streak ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : "Tick a food when you eat it to start your streak.")
-        : eaten >= goal ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
+        : hit ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
       const showNudge = isToday && eaten > 0 && !standalone() && (installEvt || isIOS) && !ls("mbp_nudge_off");
-      const eatenCard = `<div class="eaten${eaten >= goal ? " done" : ""}"><span>Eaten today</span><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
+      const eatenCard = `<div class="eaten${hit ? " done" : ""}"><span>Eaten today</span><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
           <b>${fmt(eaten)} <small>of ${goal} g protein</small></b><span>${Math.min(999, pct)}%</span>
           <div class="bar"><i style="width:${Math.min(100, eaten / goal * 100)}%"></i></div>
           <p class="e-msg">${msg}</p>
