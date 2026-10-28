@@ -1076,7 +1076,7 @@ __PLAN__
     addEventListener("focus", check);
     addEventListener("online", check);
   }
-  function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); }
+  function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); if (step >= 0 && step <= 3) track("q" + step); }   // which quiz question people reach
 
   function chrome() {
     const quiz = S.step >= 0 && S.step < 4;
