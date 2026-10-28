@@ -31,7 +31,7 @@ const pngSize = (buf) => [buf.readUInt32BE(16), buf.readUInt32BE(20)];
       await p.click('#sharePlan'); await wait(800);
       const s = await p.evaluate(() => window.__shared);
       ok(s && s.files.length === 1 && s.files[0][0] === 'my-macrava-plan.png' && s.files[0][1] === 'image/png' && s.files[0][2] > 20000, 'opens the share sheet with the picture (' + JSON.stringify(s && s.files) + ')');
-      ok(s && /My protein plan: \d+ g a day for ₹\d+/.test(s.text) && s.url === 'https://macrava.pages.dev', 'share text has protein, cost and the link (' + (s && s.text) + ')');
+      ok(s && /My protein plan: \d+ g a day for ₹\d+/.test(s.text) && s.url === 'https://macrava.com', 'share text has protein, cost and the link (' + (s && s.text) + ')');
       // The message matches the plan on screen
       const shownP = await p.$eval('.ring .mid b', e => parseInt(e.textContent));
       ok(s && s.text.includes(shownP + ' g'), 'shared protein matches the plan (' + shownP + ')');
