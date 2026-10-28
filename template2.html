@@ -79,7 +79,21 @@ button.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 2
 .bar-logout:hover { border-color: var(--ink); }
 .bar-logout svg { width: 15px; height: 15px; flex: none; }
 .bar-logout[hidden] { display: none; }
-@media (max-width: 360px) { .bar-logout span { display: none; } .bar-logout { padding: 0 9px; } }
+.bar-login { border-color: var(--ink); background: var(--ink); color: var(--bg); font-weight: 600; }
+.bar-login:hover { opacity: .9; }
+/* Small phones with Install app and Log in both showing: logo only, so the header still fits */
+@media (max-width: 400px) { .app > .bar:has(#installBtn:not([hidden])):has(#login:not([hidden])) .brand > span { display: none; } }
+.w-or { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 13px; margin: 4px 0 -2px; }
+.w-or::before, .w-or::after { content: ""; flex: 1; height: 1px; background: var(--hair); }
+.auth-btns .gbtn, .auth-btns #emailMode { margin-top: 0; }
+.signin-why { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; color: var(--muted); font-size: 14.5px; }
+.signin-why li::before { content: "✓"; color: var(--accent); font-weight: 700; margin-right: 8px; }
+.save-card { border: 1.5px solid var(--hair); border-radius: 16px; padding: 14px; margin-top: 12px; background: var(--surface); position: relative; }
+.save-card p { margin: 0 34px 10px 0; font-size: 14px; line-height: 1.4; }
+.save-card .gbtn { margin-top: 0; padding: 11px; }
+.save-card .w-link { display: block; margin: 8px auto 0; font-size: 13.5px; }
+.save-card .x { position: absolute; top: 8px; right: 8px; }
+@media (max-width: 360px) { .bar-logout:not(.bar-login) span { display: none; } .bar-logout:not(.bar-login) { padding: 0 9px; } }
 .brand { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 7px; }
 .brand-ic { width: 22px; height: 22px; flex: none; }
 .brand b { color: var(--accent); font-weight: 600; }
@@ -414,7 +428,7 @@ li.ate .n { text-decoration: line-through; color: var(--muted); }
 .e-day.today span { color: var(--ink); font-weight: 700; }
 .nudge { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px dashed var(--hair); border-radius: 14px; padding: 10px 12px; font-size: 13.5px; margin-top: 10px; }
 .nudge span { flex: 1; }
-.nudge .x { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.nudge .x, .save-card .x { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
 .hint-sm { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
 .people { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .loc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: var(--muted); }
@@ -511,6 +525,7 @@ try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") 
     <div class="bar-r">
       <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <button type="button" class="install-btn" id="installBtn" hidden>Install app</button>
+      <button type="button" class="bar-logout bar-login" id="login" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg><span>Log in</span></button>
       <button type="button" class="bar-logout" id="logout" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Log out</span></button>
       <button type="button" class="theme-btn" id="themeBtn" aria-label="Switch to dark mode"></button>
     </div>
@@ -1082,7 +1097,8 @@ __PLAN__
     const quiz = S.step >= 0 && S.step < 4;
     $("#dots").hidden = !quiz;
     $("#siteFoot").hidden = quiz;
-    $("#logout").hidden = !(S.name && (currentUser || S.step >= 4)) || quiz || authMode === "setup";
+    $("#logout").hidden = !currentUser || quiz || authMode === "setup";   // signed in: Log out
+    $("#login").hidden = !cloud.enabled || !!currentUser || quiz || (S.step < 0 && authMode !== "home");   // not signed in: Log in
     [...$("#dots").children].forEach((d, i) => d.classList.toggle("on", i === S.step));
     $("#back").hidden = !(quiz && S.step > 0);
     $("#brand").hidden = quiz && S.step > 0;
@@ -1096,6 +1112,12 @@ __PLAN__
     clearDevice();
     cloud.signOut();
   });
+  $("#login").addEventListener("click", () => { authMode = "signin"; authMsg = ""; S.step = -1; render(); window.scrollTo(0, 0); });
+  // Google sign-in from any button: a cancelled or failed attempt shows the retry screen
+  const bindGoogle = (g) => { if (g) g.addEventListener("click", async () => {
+    g.disabled = true; loggedOut = false; lsSet("mbp_loggedout", null);
+    try { await cloud.google(); } catch (e) { g.disabled = false; authMode = "error"; authErrKind = "google"; authMsg = "Sign-in didn't finish. Please try again."; render(); }
+  }); };
   $("#brand").addEventListener("click", () => {
     if (authMode === "waiting") return;
     if (currentUser && (authMode === "setup" || !S.name)) return;   // finishing sign-up: stay on it
@@ -1162,19 +1184,33 @@ __PLAN__
         </div>
         <div class="auth-btns">
           <button type="button" class="cta wu" id="guest" style="animation-delay:2.6s">${hasPlan() && (S.guest || currentUser) ? "Back to my plan" : cloud.enabled ? "Make my plan" : "Try without an account"} →</button>
-          ${cloud.enabled && !currentUser ? `<p class="w-signin wu" style="animation-delay:2.75s">Have an account? Sign in with <button type="button" class="w-link" id="google">Google</button> or <button type="button" class="w-link" id="emailMode">email</button></p>` : ""}
+          ${cloud.enabled && !currentUser ? `<div class="w-or wu" style="animation-delay:2.7s">or save your plan to an account</div>
+          <button type="button" class="ghost gbtn wu" id="google" style="animation-delay:2.75s">${G_LOGO}Continue with Google</button>
+          <button type="button" class="ghost wu" id="emailMode" style="animation-delay:2.8s">Continue with email</button>` : ""}
         </div></section>`;
       if (anim && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
         const count = (el, to, fmt) => { if (!el) return; el.textContent = fmt(0); setTimeout(() => { const t0 = performance.now();
           const f = (n) => { const t = Math.min(1, (n - t0) / 800); el.textContent = fmt(Math.round(to * (1 - Math.pow(1 - t, 3)))); if (t < 1) requestAnimationFrame(f); }; requestAnimationFrame(f); }, 2300); };
         count($("#wG"), 130, (v) => v + " g"); count($("#wR"), 196, (v) => "₹" + v);
       }
-      const g = $("#google"); if (g) g.addEventListener("click", async () => {
-        g.disabled = true; loggedOut = false; lsSet("mbp_loggedout", null);
-        try { await cloud.google(); } catch (e) { g.disabled = false; authMode = "error"; authErrKind = "google"; authMsg = "Sign-in didn't finish. Please try again."; render(); }
-      });
+      bindGoogle($("#google"));
       const em = $("#emailMode"); if (em) em.addEventListener("click", () => { authMode = "email"; pwCreate = false; authMsg = ""; render(); });
       $("#guest").addEventListener("click", () => { if (!currentUser) S.guest = true; go(hasPlan() ? 4 : 0); });
+      return;
+    }
+    if (authMode === "signin") {
+      // Header "Log in": one screen with both ways in
+      screen.innerHTML = `<section class="step">
+        <h1>Log in or sign up</h1>
+        <ul class="signin-why"><li>Free, takes a few seconds</li><li>Your plan, prices and ticks saved</li><li>Same plan on your phone and laptop</li></ul>
+        <div class="auth-btns">
+          <button type="button" class="cta gbtn" id="google">${G_LOGO}Continue with Google</button>
+          <button type="button" class="ghost" id="emailMode">Continue with email</button>
+          <button type="button" class="link guest" id="notNow">Not now</button>
+        </div></section>`;
+      bindGoogle($("#google"));
+      $("#emailMode").addEventListener("click", () => { authMode = "email"; pwCreate = false; authMsg = ""; render(); });
+      $("#notNow").addEventListener("click", () => { authMode = "home"; if (S.guest && hasPlan()) go(4); else render(); });
       return;
     }
     if (authMode === "waiting") {
@@ -2045,6 +2081,10 @@ __PLAN__
           <div class="bar"><i style="width:${Math.min(100, eaten / goal * 100)}%"></i></div>
           <p class="e-msg">${msg}</p>
           <div class="e-week" aria-label="Last 7 days">${week}</div></div>
+          ${cloud.enabled && !currentUser && isToday && !ls("mbp_save_off") ? `<div class="save-card"><p><b>Save your plan.</b> Right now it lives only in this browser. Sign in to keep it and use it on any phone.</p>
+          <button type="button" class="ghost gbtn" id="saveGoogle">${G_LOGO}Continue with Google</button>
+          <button type="button" class="w-link" id="saveEmail">or use email</button>
+          <button type="button" class="x" id="saveX" aria-label="Hide this">×</button></div>` : ""}
           ${showNudge ? `<div class="nudge"><span>Add Macrava to your home screen so ticking takes one tap.</span><button type="button" class="btn-sm" id="nudgeAdd">Add</button><button type="button" class="x" id="nudgeX" aria-label="Hide this">×</button></div>` : ""}`;
       const sec = (meal) => {
         const mess = messRow(meal, messIn(meal));
@@ -2111,6 +2151,9 @@ __PLAN__
       }));
       const na = $("#nudgeAdd"); if (na) na.addEventListener("click", () => $("#installBtn").click());
       const nx = $("#nudgeX"); if (nx) nx.addEventListener("click", () => { lsSet("mbp_nudge_off", "1"); drawDay(); });
+      bindGoogle($("#saveGoogle"));
+      const se = $("#saveEmail"); if (se) se.addEventListener("click", () => { authMode = "email"; pwCreate = true; authMsg = ""; S.step = -1; render(); window.scrollTo(0, 0); });
+      const sx = $("#saveX"); if (sx) sx.addEventListener("click", () => { lsSet("mbp_save_off", "1"); drawDay(); });
       panel.querySelectorAll(".swap[data-id]").forEach(b => b.addEventListener("click", () => {
         const it = dp.items.find(x => x.food.id === +b.dataset.id);
         if (it) { trackFood("swap_out", it.food); swapBefore = new Set(p.items.map(x => x.food.id)); }
@@ -2307,7 +2350,7 @@ __PLAN__
     $("#restart").addEventListener("click", () => go(0));
     screen.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => { S.style = b.dataset.style; S.exclude = []; save(); result(); }));
     const lc = $("#locChange"); if (lc) lc.addEventListener("click", () => { $("#locEdit").hidden = false; lc.hidden = true; });
-    const ls = $("#locSave"); if (ls) ls.addEventListener("click", () => {
+    const locBtn = $("#locSave"); if (locBtn) locBtn.addEventListener("click", () => {
       S.city = $("#lCity").value || null; S.area = $("#lArea").value.trim(); save();
       result();
     });
