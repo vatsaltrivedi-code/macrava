@@ -12,14 +12,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Macrava">
 <meta name="description" content="Free protein meal planner for hostel and PG students in India. Uses Blinkit and Zepto prices and counts your mess meals to hit your target on a budget.">
-<link rel="canonical" href="https://macrava.pages.dev/">
+<link rel="canonical" href="https://macrava.com/">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [{"@type": "Question", "name": "What is Macrava?", "acceptedAnswer": {"@type": "Answer", "text": "Macrava is a free web app that plans a day of food to hit your protein target within a fixed daily budget. It is made for students in Indian hostels and PGs."}}, {"@type": "Question", "name": "Where do the prices come from?", "acceptedAnswer": {"@type": "Answer", "text": "Grocery prices come from Blinkit and Zepto, collected in Gurugram. Prices change and can differ in your city, so you can edit any price in the app. Restaurant items use each chain’s published nutrition data and website prices."}}, {"@type": "Question", "name": "How does it count mess food?", "acceptedAnswer": {"@type": "Answer", "text": "Each mess meal is counted as roughly 15 g of protein and 650 kcal. That is an estimate, not a measurement, and your mess may differ. You can log what was on your plate for a better number."}}, {"@type": "Question", "name": "Can I use it without a kitchen?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. You choose what you have: kettle, microwave, fridge, or no cooking. The plan only includes food that works with that setup."}}, {"@type": "Question", "name": "Does it care about protein quality?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. By default about 65% of your protein comes from high-quality sources such as dairy, eggs, soya, meat, fish and whey. If your budget cannot reach your target that way, the app lowers that share step by step so you still get a plan."}}, {"@type": "Question", "name": "Is Macrava free?", "acceptedAnswer": {"@type": "Answer", "text": "The daily plan is free for now. A paid Pro plan with weekly plans and shopping lists is planned, and the price is not decided yet."}}, {"@type": "Question", "name": "Is this medical advice?", "acceptedAnswer": {"@type": "Answer", "text": "No. Macrava is a food-planning tool and is not medical or dietary advice. If you have a health condition, talk to a doctor or dietitian."}}]}</script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Macrava">
-<meta property="og:url" content="https://macrava.pages.dev/">
+<meta property="og:url" content="https://macrava.com/">
 <meta property="og:title" content="Macrava: Protein Meal Planner for Hostel &amp; PG Students">
 <meta property="og:description" content="Plans the cheapest way to hit your daily protein from Blinkit, Zepto and Licious, counting your mess meals too.">
-<meta property="og:image" content="https://macrava.pages.dev/og.png">
+<meta property="og:image" content="https://macrava.com/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="Macrava logo with the line: Hit your protein on any budget.">
@@ -468,13 +468,32 @@ ul.shop .sp { font-variant-numeric: tabular-nums; font-weight: 600; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
-<script>/* moved from macro-budget.pages.dev: take over a guest's saved plan once, then tidy the address */
+<script>/* Our address is macrava.com. Opened at an older address (macrava.pages.dev, www.macrava.com): go there, and bring a guest's
+   saved plan along in the part of the link after "#" (never sent to a server). Signed-in people just sign in again; their plan is in their account.
+   Not while a sign-in is coming back to this address (?code= or an auth #hash), so that sign-in can finish here first. */
+(function () {
+  try {
+    var h = location.hostname;
+    if (h !== "macrava.pages.dev" && h !== "www.macrava.com") return;
+    if (/[?&](code|error)=/.test(location.search) || /access_token|error/.test(location.hash) || location.hash.indexOf("#move=") === 0) return;
+    var to = "https://macrava.com" + location.pathname + location.search, d = {}, n = 0;
+    var signedIn = localStorage.getItem("mbp_owner") || Object.keys(localStorage).some(function (k) { return k.indexOf("sb-") === 0; });
+    (signedIn ? ["theme", "mbp_device", "mbp_nocount"] : ["mbp", "theme", "mbp_device", "mbp_seen", "mbp_pro", "mbp_nocount", "mbp_nudge_off"]).forEach(function (k) {
+      var v = localStorage.getItem(k); if (v) { d[k] = v; n++; }
+    });
+    if (n) to += "#move=" + encodeURIComponent(JSON.stringify(d));
+    location.replace(to);
+  } catch (e) {}
+})();
+</script>
+<script>/* moved here from an older address: take over a guest's saved plan once, then tidy the address */
 try {
   if (location.hash.indexOf("#move=") === 0) {
     var mv = location.hash.slice(6); history.replaceState(null, "", location.pathname + location.search);
-    if (/^https:\/\/macro-budget\.pages\.dev\//.test(document.referrer) && mv.length < 300000 && !localStorage.getItem("mbp")) {
-      var d = JSON.parse(decodeURIComponent(mv)), keep = ["mbp", "theme", "mbp_device", "mbp_seen", "mbp_pro"];
-      keep.forEach(function (k) { if (typeof d[k] === "string" && d[k].length < 250000) localStorage.setItem(k, d[k]); });
+    if (/^https:\/\/(macro-budget\.pages\.dev|macrava\.pages\.dev|www\.macrava\.com)\//.test(document.referrer) && mv.length < 300000) {
+      var d = JSON.parse(decodeURIComponent(mv)), keep = ["mbp", "theme", "mbp_device", "mbp_seen", "mbp_pro", "mbp_nocount", "mbp_nudge_off"];
+      // never overwrite what this address already has (a plan made here wins)
+      keep.forEach(function (k) { if (typeof d[k] === "string" && d[k].length < 250000 && !localStorage.getItem(k)) localStorage.setItem(k, d[k]); });
     }
   }
 } catch (e) {}
@@ -1726,7 +1745,7 @@ __PLAN__
     });
   }
   // Count real people only: not search-engine robots or test browsers, and not the owner's own devices
-  // (open macrava.pages.dev/?nocount=1 once on a device to stop counting it; ?nocount=0 to count it again)
+  // (open macrava.com/?nocount=1 once on a device to stop counting it; ?nocount=0 to count it again)
   try {
     const nc = new URLSearchParams(location.search).get("nocount");
     if (nc === "1" || nc === "0") { lsSet("mbp_nocount", nc === "1" ? "1" : null); const u = new URL(location.href); u.searchParams.delete("nocount"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
@@ -2352,7 +2371,7 @@ __PLAN__
       if (q) { x.fillStyle = "#9a9a94"; x.font = `500 32px ${F}`; x.fillText(q, 120, y + 42); }
       x.fillStyle = "#e8590c"; x.font = `800 44px ${F}`; x.textAlign = "right"; x.fillText(`+${Math.round(pr)} g`, W - 120, y + 8); x.textAlign = "left"; y += 100; });
     if (rows.length > shown.length) { x.fillStyle = "#9a9a94"; x.font = `600 36px ${F}`; x.fillText(`+ ${rows.length - shown.length} more`, 120, y); }
-    x.fillStyle = "#fff"; x.textAlign = "center"; x.font = `800 58px ${F}`; x.fillText("Make yours → macrava.pages.dev", W / 2, 1760);
+    x.fillStyle = "#fff"; x.textAlign = "center"; x.font = `800 58px ${F}`; x.fillText("Make yours → macrava.com", W / 2, 1760);
     x.font = `600 38px ${F}`; x.globalAlpha = .85; x.fillText("Protein on any budget · Made in India", W / 2, 1830); x.globalAlpha = 1; x.textAlign = "left";
     return cv;
   }
@@ -2366,7 +2385,7 @@ __PLAN__
       const file = new File([blob], "my-macrava-plan.png", { type: "image/png" });
       const text = `My protein plan: ${Math.round(T.p)} g a day for ₹${Math.round(T.cost)}. Make yours:`;
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try { await navigator.share({ files: [file], text, url: "https://macrava.pages.dev" }); } catch (e) { /* closed the share sheet */ }
+        try { await navigator.share({ files: [file], text, url: "https://macrava.com" }); } catch (e) { /* closed the share sheet */ }
       } else {
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "my-macrava-plan.png"; document.body.appendChild(a); a.click(); a.remove();
         setTimeout(() => URL.revokeObjectURL(a.href), 4000);
