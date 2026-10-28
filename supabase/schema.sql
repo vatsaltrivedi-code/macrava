@@ -95,23 +95,24 @@ revoke all on function public.record_pro_interest(uuid, text, text, int) from pu
 grant execute on function public.record_pro_interest(uuid, text, text, int) to anon, authenticated;
 
 -- Launch metrics: anonymous usage counts. One row per device, per day (India time), per event.
+-- q0-q3: reached question 1-4 of the setup quiz, to see where people stop before their first plan.
 -- No names or plan data: just a random device ID made by the app, the day and what happened.
 create table if not exists public.usage_events (
   device uuid not null,
   day date not null,
-  event text not null check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share')),
+  event text not null check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share', 'q0', 'q1', 'q2', 'q3')),
   primary key (device, day, event)
 );
 -- Older databases: keep the allowed events in step with the app
 alter table public.usage_events drop constraint if exists usage_events_event_check;
-alter table public.usage_events add constraint usage_events_event_check check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share'));
+alter table public.usage_events add constraint usage_events_event_check check (event in ('open', 'plan', 'tick', 'pro', 'account', 'share', 'q0', 'q1', 'q2', 'q3'));
 alter table public.usage_events enable row level security;
 revoke all on public.usage_events from anon, authenticated;
 
 create or replace function public.record_usage(p_device uuid, p_event text) returns void
 language plpgsql security definer set search_path = '' as $$
 begin
-  if p_device is null or p_event not in ('open', 'plan', 'tick', 'pro', 'account', 'share') then
+  if p_device is null or p_event not in ('open', 'plan', 'tick', 'pro', 'account', 'share', 'q0', 'q1', 'q2', 'q3') then
     raise exception 'bad input';
   end if;
   -- A cap so a script can't fill the table
@@ -134,7 +135,9 @@ create or replace view public.usage_daily with (security_invoker = true) as
          count(distinct device) filter (where event = 'tick') as ticked_meals,
          count(distinct device) filter (where event = 'pro') as saw_pro,
          count(distinct device) filter (where event = 'account') as signed_in,
-         count(distinct device) filter (where event = 'share') as shared
+         count(distinct device) filter (where event = 'share') as shared,
+         count(distinct device) filter (where event = 'q0') as started_quiz,
+         count(distinct device) filter (where event = 'q3') as reached_last_question
   from public.usage_events group by day order by day desc;
 
 create or replace view public.usage_totals with (security_invoker = true) as
