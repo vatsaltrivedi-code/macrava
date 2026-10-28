@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://macrava.pages.dev/sitemap.xml
+Sitemap: https://macrava.com/sitemap.xml
