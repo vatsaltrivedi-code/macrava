@@ -68,6 +68,17 @@ button { font: inherit; color: inherit; }
 
 /* Top bar */
 .bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 40px; }
+.app > .bar { height: 56px; position: sticky; top: 0; z-index: 30; margin: -20px -20px 0; padding: env(safe-area-inset-top, 0px) 20px 0; box-sizing: content-box;
+  background: var(--bg); border-bottom: 1px solid transparent; transition: border-color .2s, box-shadow .2s; }
+.app > .bar.scrolled { border-bottom-color: var(--hair); box-shadow: 0 6px 16px -14px rgba(0,0,0,.35); }
+button.brand { background: none; border: 0; padding: 4px 6px 4px 0; margin: 0; cursor: pointer; color: var(--ink); border-radius: 8px; }
+button.brand:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.bar-logout { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1.5px solid var(--hair);
+  background: var(--surface); color: var(--ink); font: 500 13px var(--font); cursor: pointer; white-space: nowrap; flex: none; }
+.bar-logout:hover { border-color: var(--ink); }
+.bar-logout svg { width: 15px; height: 15px; flex: none; }
+.bar-logout[hidden] { display: none; }
+@media (max-width: 360px) { .bar-logout span { display: none; } .bar-logout { padding: 0 9px; } }
 .brand { font-weight: 600; font-size: 14px; letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 7px; }
 .brand-ic { width: 22px; height: 22px; flex: none; }
 .brand b { color: var(--accent); font-weight: 600; }
@@ -476,10 +487,11 @@ try { var t = localStorage.getItem("theme"); if (t === "light" || t === "dark") 
 <div class="app">
   <div class="bar">
     <button type="button" class="back" id="back" hidden>← Back</button>
-    <span class="brand" id="brand"><svg class="brand-ic" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#e8590c"/><path d="M10 33H54a22 19 0 0 1-44 0Z" fill="#fff"/><rect x="23" y="51.5" width="18" height="4" rx="2" fill="#fff"/><rect class="bb bb1" x="20" y="22" width="6.5" height="9" rx="3.25" fill="#fff" opacity=".6"/><rect class="bb bb2" x="28.75" y="17" width="6.5" height="14" rx="3.25" fill="#fff" opacity=".8"/><rect class="bb bb3" x="37.5" y="10" width="6.5" height="21" rx="3.25" fill="#fff"/></svg><span>Macrava</span></span>
+    <button type="button" class="brand" id="brand" aria-label="Macrava home"><svg class="brand-ic" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><rect width="64" height="64" rx="15" fill="#e8590c"/><path d="M10 33H54a22 19 0 0 1-44 0Z" fill="#fff"/><rect x="23" y="51.5" width="18" height="4" rx="2" fill="#fff"/><rect class="bb bb1" x="20" y="22" width="6.5" height="9" rx="3.25" fill="#fff" opacity=".6"/><rect class="bb bb2" x="28.75" y="17" width="6.5" height="14" rx="3.25" fill="#fff" opacity=".8"/><rect class="bb bb3" x="37.5" y="10" width="6.5" height="21" rx="3.25" fill="#fff"/></svg><span>Macrava</span></button>
     <div class="bar-r">
       <div class="dots" id="dots" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
       <button type="button" class="install-btn" id="installBtn" hidden>Install app</button>
+      <button type="button" class="bar-logout" id="logout" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg><span>Log out</span></button>
       <button type="button" class="theme-btn" id="themeBtn" aria-label="Switch to dark mode"></button>
     </div>
   </div>
@@ -1050,12 +1062,27 @@ __PLAN__
     const quiz = S.step >= 0 && S.step < 4;
     $("#dots").hidden = !quiz;
     $("#siteFoot").hidden = quiz;
+    $("#logout").hidden = !(S.name && (currentUser || S.step >= 4)) || quiz || authMode === "setup";
     [...$("#dots").children].forEach((d, i) => d.classList.toggle("on", i === S.step));
     $("#back").hidden = !(quiz && S.step > 0);
     $("#brand").hidden = quiz && S.step > 0;
     $("#back").hidden = $("#back").hidden && !(S.step < 0 && authMode !== "home");
     if (currentUser && (authMode === "setup" || choosing)) $("#back").hidden = true;   // signed in: no stepping back into guest mode
   }
+  // Header: log out (signed-in people), logo goes back to the intro screen, a hairline once you scroll
+  $("#logout").addEventListener("click", () => {
+    // Shared hostel phones: logging out removes the plan, prices and account from this device
+    if (!confirm("Log out and remove your plan and saved prices from this device? Copy your backup code first if you want them back.")) return;
+    clearDevice();
+    cloud.signOut();
+  });
+  $("#brand").addEventListener("click", () => {
+    if (authMode === "waiting") return;
+    if (currentUser && (authMode === "setup" || !S.name)) return;   // finishing sign-up: stay on it
+    authMode = "home"; S.step = -1; render(); window.scrollTo(0, 0);
+  });
+  const onScroll = () => $(".app > .bar").classList.toggle("scrolled", window.scrollY > 4);
+  addEventListener("scroll", onScroll, { passive: true }); onScroll();
   $("#back").addEventListener("click", () => {
     if (S.step < 0) { authMode = "home"; render(); return; }
     go(Math.max(0, S.step - 1));
@@ -1114,8 +1141,8 @@ __PLAN__
           <div class="w-r tot wr" style="animation-delay:2.3s"><span>Total</span><span><b id="wG">130 g</b> · <span id="wR">₹196</span></span></div>
         </div>
         <div class="auth-btns">
-          <button type="button" class="cta wu" id="guest" style="animation-delay:2.6s">${cloud.enabled ? "Make my plan" : "Try without an account"} →</button>
-          ${cloud.enabled ? `<p class="w-signin wu" style="animation-delay:2.75s">Have an account? Sign in with <button type="button" class="w-link" id="google">Google</button> or <button type="button" class="w-link" id="emailMode">email</button></p>` : ""}
+          <button type="button" class="cta wu" id="guest" style="animation-delay:2.6s">${hasPlan() && (S.guest || currentUser) ? "Back to my plan" : cloud.enabled ? "Make my plan" : "Try without an account"} →</button>
+          ${cloud.enabled && !currentUser ? `<p class="w-signin wu" style="animation-delay:2.75s">Have an account? Sign in with <button type="button" class="w-link" id="google">Google</button> or <button type="button" class="w-link" id="emailMode">email</button></p>` : ""}
         </div></section>`;
       if (anim && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
         const count = (el, to, fmt) => { if (!el) return; el.textContent = fmt(0); setTimeout(() => { const t0 = performance.now();
@@ -1127,7 +1154,7 @@ __PLAN__
         try { await cloud.google(); } catch (e) { g.disabled = false; authMode = "error"; authErrKind = "google"; authMsg = "Sign-in didn't finish. Please try again."; render(); }
       });
       const em = $("#emailMode"); if (em) em.addEventListener("click", () => { authMode = "email"; pwCreate = false; authMsg = ""; render(); });
-      $("#guest").addEventListener("click", () => { S.guest = true; go(hasPlan() ? 4 : 0); });
+      $("#guest").addEventListener("click", () => { if (!currentUser) S.guest = true; go(hasPlan() ? 4 : 0); });
       return;
     }
     if (authMode === "waiting") {
@@ -1845,8 +1872,7 @@ __PLAN__
         </div>
       </div>
       <button type="button" class="ghost" id="restart">Change my answers</button>
-      ${S.name || currentUser ? `<div class="acct">
-        ${S.name ? `<button type="button" id="logout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>Log out</button>` : ""}
+      ${currentUser ? `<div class="acct">
         ${currentUser ? `<button type="button" class="danger" id="deleteAcct"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>Delete my account</button>` : ""}
       </div>` : ""}
       <div class="backup">
@@ -2265,12 +2291,6 @@ __PLAN__
       S.city = $("#lCity").value || null; S.area = $("#lArea").value.trim(); save();
       result();
     });
-    const lo = $("#logout"); if (lo) lo.addEventListener("click", () => {
-      // Shared hostel phones: logging out removes the plan, prices and account from this device
-      if (!confirm("Log out and remove your plan and saved prices from this device? Copy your backup code first if you want them back.")) return;
-      clearDevice();
-      cloud.signOut();
-    });
     const da = $("#deleteAcct"); if (da) da.addEventListener("click", confirmDelete);
   }
 
@@ -2387,7 +2407,8 @@ __PLAN__
   // The old "account" was only an email typed on this device; real sign-in replaces it (the plan is kept)
   try { localStorage.removeItem("mbp_user"); } catch (e) {}
   cloud.onChange((u) => {
-    if (u && !currentUser && !signingIn && !loggedOut && S.step < 0) afterSignIn(u);
+    // A session restored while this device is marked logged out is a leftover: startAuth signs it out
+    if (u && !currentUser && !signingIn && !loggedOut && !ls("mbp_loggedout") && S.step < 0) afterSignIn(u);
     else if (u && currentUser) retry();   // e.g. token refreshed once the network is back
   });
   const boot = () => { trackOpen(); if (cloud.enabled) startAuth(); else render(); };
