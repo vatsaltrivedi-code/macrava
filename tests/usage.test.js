@@ -9,6 +9,17 @@ const evs = (store) => store.usage.map(u => u.event);
   build(null);
   const b = await chromium.launch();
   try {
+    // Quiz steps: which question a new visitor reaches, once a day each
+    { const store = makeStore(); const p = await newDevice(b, store);
+      await p.goto(APP); await wait(3200);
+      await p.click('#guest'); await wait(400);
+      ok(evs(store).includes('q0'), 'starting the quiz counts q0 (got ' + evs(store) + ')');
+      await p.click('.options .opt'); await wait(600);
+      ok(evs(store).includes('q1'), 'answering question 1 counts q1 (got ' + evs(store) + ')');
+      await p.click('#back'); await wait(300); await p.click('.options .opt'); await wait(600);
+      ok(evs(store).filter(e => e === 'q1').length === 1 && evs(store).filter(e => e === 'q0').length === 1, 'going back and forward does not count a step twice');
+      await p.context().close();
+    }
     { const store = makeStore(); const p = await newDevice(b, store);
       await p.addInitScript((st) => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', 1); localStorage.setItem('mbp', JSON.stringify(st)); } }, PLAN);
       await p.goto(APP); await wait(300);
