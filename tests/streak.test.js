@@ -29,12 +29,44 @@ const saved = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('mbp')).lo
       ok(p.errors.length === 0, 'no page errors (' + p.errors.join('; ') + ')');
       await p.context().close(); }
     // Returning user: yesterday and the day before logged, nothing yet today: streak still alive
-    { const p = await open(b, { [day(1)]: [140, 130], [day(2)]: [60, 130], [day(4)]: [100, 130] });
+    { const p = await open(b, { [day(1)]: [140, 130], [day(2)]: [60, 130], [day(5)]: [100, 130] });
       ok(/2-day streak/.test(await p.textContent('.e-streak')), 'streak counts back from yesterday when today is empty');
       ok(/keep your <b>2-day streak<\/b>/.test(await p.innerHTML('.e-msg')), 'reminds you to keep the streak');
       ok((await p.$$('.e-day.hit')).length === 1, 'a day that hit the goal is filled in');
       await p.click('.tick-btn'); await wait(300);
       ok(/3-day streak/.test(await p.textContent('.e-streak')), 'ticking today extends the streak to 3');
+      await p.context().close(); }
+    // Never miss twice: one missed day keeps the streak, two in a row end it
+    { const p = await open(b, { [day(1)]: [100, 130], [day(3)]: [100, 130], [day(4)]: [100, 130] });
+      ok(/3-day streak/.test(await p.textContent('.e-streak')), 'one missed day (day 2) keeps the streak: 3 days ticked');
+      await p.context().close(); }
+    { const p = await open(b, { [day(1)]: [100, 130], [day(4)]: [100, 130] });
+      ok(/1-day streak/.test(await p.textContent('.e-streak')), 'two missed days in a row end the streak');
+      await p.context().close(); }
+    { const p = await open(b, { [day(2)]: [100, 130], [day(3)]: [100, 130] });
+      ok(/2-day streak/.test(await p.textContent('.e-streak')) && /missed yesterday/i.test(await p.textContent('.e-msg')), 'yesterday missed: streak alive and the message says so');
+      await p.context().close(); }
+    // Up next card: first unticked food, one tap ticks it, "Not yet" hides it until the next open
+    { const p = await open(b, {});
+      ok(await p.$('.upnext'), 'Up next card is shown on a fresh day');
+      const first = (await p.getAttribute('.upnext [data-upnext]', 'data-upnext'));
+      const firstRow = await p.getAttribute('.tick-btn', 'data-ate');
+      ok(first === firstRow, 'Up next points at the first food in the list (' + first + ')');
+      await p.click('.upnext [data-upnext]'); await wait(300);
+      ok((await p.getAttribute('.tick-btn[data-ate="' + first + '"]', 'aria-pressed')) === 'true', 'I ate this ticks that food');
+      const lg = await saved(p);
+      ok(lg[day(0)] && lg[day(0)][0] > 0, 'ticking from Up next saves today to the log');
+      const next = await p.getAttribute('.upnext [data-upnext]', 'data-upnext');
+      ok(next && next !== first, 'Up next moves on to the next food (' + next + ')');
+      await p.click('#upNo'); await wait(300);
+      ok(!(await p.$('.upnext')), 'Not yet hides the card');
+      await p.click('.tick-btn[aria-pressed="false"]'); await wait(300);
+      ok(!(await p.$('.upnext')), 'the card stays hidden after other ticks this session');
+      ok(p.errors.length === 0, 'no page errors (' + p.errors.join('; ') + ')');
+      await p.context().close(); }
+    { const p = await open(b, {});
+      for (let i = 0; i < 30; i++) { const t = await p.$('.tick-btn[aria-pressed="false"]'); if (!t) break; await t.click(); await wait(150); }
+      ok(!(await p.$('.upnext')), 'no Up next card once everything is ticked');
       await p.context().close(); }
     // Hitting the goal: tick everything
     { const p = await open(b, {});
