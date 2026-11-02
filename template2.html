@@ -164,15 +164,62 @@ input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 
 /* Result screen */
 .result { display: flex; flex-direction: column; gap: 22px; padding-top: 16px; animation: in .3s ease both; }
 .r-side, .r-main, .r-more { display: contents; }
-/* Laptops and desktops: settings on the left, the plan on the right */
-@media (min-width: 1000px) {
-  .app:has(.r-main) { max-width: 1120px; padding-inline: 32px; }
-  .result { display: grid; grid-template-columns: minmax(360px, 420px) minmax(0, 1fr); grid-template-areas: "side main" "more main"; grid-template-rows: auto 1fr; column-gap: 40px; row-gap: 22px; align-items: start; }
-  .r-side, .r-main, .r-more { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
-  .r-side { grid-area: side; }
-  .r-more { grid-area: more; }
-  .r-main { grid-area: main; }
-}
+/* Plan screen: one view at a time (Today, Shopping, Order in, You), picked in the bottom bar */
+.result { padding-bottom: 72px; gap: 16px; padding-top: 8px; animation: none; }   /* no transform here: it would pin the bottom bar and sheet to this box instead of the screen */
+.result:not([data-view="day"]) > .r-side { display: none; }
+.result:not([data-view="you"]) > .r-more { display: none; }
+.result[data-view="you"] > .r-main { display: none; }
+.r-more { gap: 22px; }
+.today-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.today-head h1 { font-size: 22px; letter-spacing: -0.02em; margin: 0; }
+.today-head .th-meta { display: block; color: var(--muted); font-size: 13px; font-weight: 500; letter-spacing: 0; margin-top: 2px; }
+.adjust-btn { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 14px; border-radius: 999px; border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); font: 600 14px var(--font); cursor: pointer; flex: none; }
+.adjust-btn:hover { border-color: var(--ink); }
+.adjust-btn svg { width: 16px; height: 16px; }
+.hero { background: var(--surface); border: 1.5px solid var(--hair); border-radius: 20px; padding: 16px; }
+.hit-line { font-size: 13px; font-weight: 600; color: var(--good, #1d8a4a); margin: 0 0 4px; }
+.under-line { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.under-line.over { color: var(--danger, #c0392b); }
+.share-btn.small { width: auto; align-self: flex-start; margin-top: 0; padding: 8px 14px; font-size: 14px; }
+.meal-card { background: var(--surface); border: 1.5px solid var(--hair); border-radius: 18px; padding: 4px 14px 2px; margin-top: 12px; }
+.meal-card h3.meal { margin: 10px 0 2px; }
+.meal-card ul.foods li:last-child { border-bottom: 0; }
+/* Bottom bar */
+.tabs.bnav { position: fixed; z-index: 40; left: 50%; transform: translateX(-50%); bottom: 0; width: min(100%, 520px); grid-template-columns: repeat(4, 1fr); border-radius: 0; background: var(--surface); border-top: 1px solid var(--hair); padding: 4px 6px calc(4px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; }
+.tabs.bnav button { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 11.5px; font-weight: 500; padding: 6px 2px; background: none; box-shadow: none; border-radius: 10px; min-height: 48px; }
+.tabs.bnav button[aria-selected="true"] { color: var(--accent); background: none; box-shadow: none; font-weight: 600; }
+.tabs.bnav svg { width: 20px; height: 20px; }
+.tabs.bnav .pro-badge { font-size: 9px; padding: 0 4px; margin: 0; position: absolute; transform: translate(14px, -4px); }
+.tabs.bnav button { position: relative; }
+body:has(.bnav) .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+/* Adjust sheet */
+.sheet-wrap { position: fixed; inset: 0; z-index: 60; background: rgba(20,16,12,.55); display: flex; align-items: flex-end; justify-content: center; }
+.sheet-wrap[hidden] { display: none; }
+.sheet { width: min(100%, 520px); max-height: 92vh; overflow-y: auto; background: var(--bg); border-radius: 22px 22px 0 0; padding: 10px 20px calc(20px + env(safe-area-inset-bottom, 0px)); box-sizing: border-box; display: grid; gap: 16px; }
+.sheet .grab { width: 40px; height: 4px; border-radius: 4px; background: var(--hair); justify-self: center; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.sheet-head h2 { font-size: 20px; margin: 0; }
+.sheet-x { width: 36px; height: 36px; border-radius: 999px; border: 0; background: none; color: var(--ink); font-size: 22px; cursor: pointer; }
+.sh-lab { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+.bview { display: inline-grid; grid-template-columns: 1fr 1fr; background: var(--hair); padding: 3px; border-radius: 999px; }
+.bview button { border: 0; background: none; padding: 6px 14px; border-radius: 999px; font: 500 13px var(--font); color: var(--muted); cursor: pointer; }
+.bview button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.bud-row { display: flex; align-items: center; justify-content: space-between; }
+.bud-big { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.bud-big small { font-size: 13px; font-weight: 500; color: var(--muted); letter-spacing: 0; margin-left: 4px; }
+.radios { display: grid; gap: 8px; }
+.radios button { display: grid; grid-template-columns: 20px 1fr; gap: 2px 10px; text-align: left; border: 1.5px solid var(--hair); background: var(--surface); border-radius: 14px; padding: 12px 14px; cursor: pointer; color: var(--ink); font: inherit; }
+.radios button::before { content: ""; grid-row: span 2; width: 16px; height: 16px; margin-top: 2px; border-radius: 50%; border: 1.5px solid var(--muted); box-sizing: border-box; }
+.radios button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.radios button[aria-pressed="true"]::before { border: 5px solid var(--accent); }
+.radios b { font-weight: 600; font-size: 15px; }
+.radios span { font-size: 13px; color: var(--muted); }
+.goal3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.goal3 button { border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 11px 6px; font: 600 14px var(--font); cursor: pointer; }
+.goal3 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.tgt-line { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+.sheet .tune, .sheet .room { background: none; border: 0; padding: 0; }
+.sheet .cta { margin-top: 4px; background: var(--accent); color: var(--on-accent, #fff); }
 .hero { display: grid; grid-template-columns: 132px 1fr; gap: 20px; align-items: center; }
 .ring { position: relative; width: 132px; height: 132px; }
 .ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
@@ -1819,7 +1866,7 @@ __PLAN__
     }));
     const again = root.querySelector("#proAgain"); if (again) again.addEventListener("click", () => { lsSet("mbp_pro", null); redraw(); });
   }
-  let selDay = 0, upNextOff = false, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
+  let selDay = 0, upNextOff = false, adjOpen = false, adjScroll = 0, tgtOpen = false, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
   function result() {
     const t = targets();
     const o = opts();
@@ -1847,8 +1894,15 @@ __PLAN__
     const frac = Math.min(1, T.p / t.protein);
     const cut = S.exclude.length;
 
-    screen.innerHTML = `<section class="result">
+    const dateTxt = new Date().toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }).replace(",", "");
+    const metaTxt = [{ veg: "Veg", egg: "Veg + eggs", nonveg: "Everything" }[S.diet] || "", { hostel: "Hostel", pg: "PG", home: "Home" }[S.place] || ""].filter(Boolean).join(" · ");
+    const left = S.budget - T.cost, hitT = T.p >= t.protein - 0.5;
+    const monthView = ls("mbp_bview") !== "day";
+    const budTxt = () => monthView ? `₹${fmt(S.budget * 30)}<small>a month · about ₹${S.budget} a day</small>` : `₹${S.budget}<small>a day · about ₹${fmt(S.budget * 30)} a month</small>`;
+    screen.innerHTML = `<section class="result" data-view="${tab === "you" ? "you" : tab === "day" ? "day" : "other"}">
       <div class="r-side">
+      <div class="today-head"><h1>Today · ${esc(dateTxt)}<span class="th-meta">${esc(metaTxt)}</span></h1>
+        <button type="button" class="adjust-btn" id="adjustBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Adjust</button></div>
       <div class="hero">
         <div class="ring" role="img" aria-label="${fmt(T.p)} of ${t.protein} grams protein">
           <svg viewBox="0 0 132 132"><circle class="track" cx="66" cy="66" r="56"></circle>
@@ -1856,41 +1910,16 @@ __PLAN__
           <div class="mid"><b>${fmt(T.p)}g</b><span>of ${t.protein}g</span></div>
         </div>
         <div>
+          ${hitT ? `<p class="hit-line">✓ Target reached</p>` : ""}
           <h2>${S.name ? `${esc(S.name)}, this costs you` : "Costs you"}</h2>
           <div class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}<small> / day</small></div>
+          <p class="under-line${left < -0.5 ? " over" : ""}">${left >= -0.5 ? `₹${fmt(Math.max(0, left))} under your ₹${S.budget} budget` : `₹${fmt(-left)} over your ₹${S.budget} budget`}</p>
           <div class="stats"><span><b>${fmt(T.kcal)}</b> kcal</span><span><b>${fmt(T.c)}g</b> carbs</span><span><b>${fmt(T.f)}g</b> fat</span></div>
           ${T.p > 0 && p.totals.hq != null ? `<p class="q-line" title="Complete protein your body uses well: milk, curd, paneer, eggs, soya, chicken, fish, whey"><b>${fmt(Math.min(100, Math.round(100 * p.totals.hq / T.p)))}%</b> from top-quality protein</p>` : ""}
           ${costEst || macroEst ? `<p class="est-line">≈ Estimate: ${[costEst ? `prices are from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
         </div>
       </div>
-      <button type="button" class="share-btn" id="sharePlan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share my plan</button>
-      <div class="tune" id="tune">
-        <div class="tune-row">
-          <div class="tune-head"><span>Budget</span><b id="tb">₹${S.budget}</b></div>
-          <input type="range" id="tBudget" min="40" max="500" step="10" value="${S.budget}" aria-label="Daily budget">
-        </div>
-        <div class="tune-row">
-          <div class="tune-head"><span>Plan style</span></div>
-          <div class="seg3" role="radiogroup" aria-label="Plan style">
-            ${[["cheap", "Cheapest", "Lowest cost"], ["balanced", "Balanced", "More variety"], ["tasty", "Tasty", "Dairy, eggs, chicken"]].map(([k, t, d]) =>
-              `<button type="button" data-style="${k}" aria-pressed="${(S.style || "balanced") === k}"><b>${t}</b><span>${d}</span></button>`).join("")}
-          </div>
-        </div>
-        <div class="tune-row">
-          <div class="tune-head"><span>Your targets</span>${S.myP != null || S.myK != null ? `<button type="button" class="link" id="useRec2">Use suggested (${rec().protein} g · ${fmt(rec().kcal)} kcal)</button>` : `<span>Suggested for you</span>`}</div>
-          <div id="tgts"><div class="stps2">${stepper("p", t.protein)}${stepper("k", t.kcal)}</div>
-          <div class="tune-head sub"><span>Carbs and fat</span>${t.carbs != null || t.fat != null ? `<button type="button" class="link" id="macAuto">Set both to auto</button>` : `<span>Grey = auto, we pick</span>`}</div>
-          <div class="stps2">${stepper("c", t.carbs, Math.round(T.c / 5) * 5)}${stepper("f", t.fat, Math.round(T.f / 5) * 5)}</div></div>
-          ${(() => { if (t.carbs == null || t.fat == null) return ""; const k = 4 * t.protein + 4 * t.carbs + 9 * t.fat;
-            return Math.abs(k - t.kcal) > t.kcal * 0.07 ? `<p class="hint-sm">Your protein, carbs and fat add up to ${fmt(k)} kcal, not ${fmt(t.kcal)}. <button type="button" class="link" id="fixKcal" data-v="${Math.round(k / 50) * 50}">Use ${fmt(Math.round(k / 50) * 50)} kcal</button></p>` : ""; })()}
-        </div>
-      </div>
-
-      ${S.kitchen === false ? `<div class="room">
-        <div class="tune-head"><span>${S.place === "pg" ? "PG room" : "Hostel room"}</span><span>${esc(gearText())}</span></div>
-        ${gearPills()}
-      </div>` : ""}
-
+      <button type="button" class="share-btn small" id="sharePlan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share my plan</button>
       ${p.styleRelaxed && !p.budgetShort ? (() => { const nm = p.styleRelaxed === "tasty" ? "Tasty" : "Balanced";
         const need = p.styleNeed != null ? Math.ceil((p.styleNeed + outSum("price")) / 10) * 10 : null;
         return `<div class="note">${need ? `A ${nm} plan for ${t.protein} g protein costs about ₹${need} a day, more than your ₹${S.budget}.` : `A ${nm} plan can't reach these targets.`} So you're seeing the cheapest plan, which fits ₹${S.budget}.
@@ -1916,11 +1945,6 @@ __PLAN__
 
       </div>
       <div class="r-main">
-      <div class="tabs" role="tablist">
-        <button type="button" role="tab" data-tab="day" aria-selected="${tab === "day"}">Today</button>
-        <button type="button" role="tab" data-tab="shop" aria-selected="${tab === "shop"}">Shopping${isPro() ? "" : ` <span class="pro-badge">Pro</span>`}</button>
-        <button type="button" role="tab" data-tab="out" aria-selected="${tab === "out"}">Order in</button>
-      </div>
 
       <div id="panel"></div>
       </div>
@@ -1959,6 +1983,54 @@ __PLAN__
         <p>Suggested targets use the Mifflin-St Jeor formula for calories you burn at rest, times your activity level, then 20% less to lose fat or 10% more to build muscle. Protein is 1.8–2.0 g per kg when building or cutting (within the 1.4–2.0 g/kg the International Society of Sports Nutrition suggests for active people, a little higher when cutting) and 1.0–1.6 g/kg to maintain; above a BMI of 25 it's counted on a healthy weight for your height. Fat is 25% of calories, carbs the rest. They're estimates for healthy adults, not medical advice; set your own anytime. Hostel plans, and PG plans without a kitchen, only use food you can make with what's in your room: eggs need a kettle or microwave, heat-and-eat packs a microwave, and chilled food a fridge unless it's a single cup or bottle you finish that day. A mess meal counts as about 15 g protein, 650 kcal, 95 g carbs and 22 g fat. Carbs and fat targets allow ±10%. Eggs count as 50 g each.</p>
         <p>Your plan alternates between two days so you're not eating the same food every day. Cups, bottles, eggs and bars are always whole, and fresh food is planned so it's finished before it goes off.</p>
       </details>
+      </div>
+      <nav class="tabs bnav" role="tablist" aria-label="Sections">
+        <button type="button" role="tab" data-tab="day" aria-selected="${tab === "day"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>Today</button>
+        <button type="button" role="tab" data-tab="shop" aria-selected="${tab === "shop"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5h2l2.2 10.2a1 1 0 0 0 1 .8h8.6a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>Shopping${isPro() ? "" : ` <span class="pro-badge">Pro</span>`}</button>
+        <button type="button" role="tab" data-tab="out" aria-selected="${tab === "out"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11h16a8 8 0 0 1-16 0Z"/><path d="M9 7c0-1.5 1-1.5 1-3M13 7c0-1.5 1-1.5 1-3"/></svg>Order in</button>
+        <button type="button" role="tab" data-tab="you" aria-selected="${tab === "you"}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c1-3.5 3.8-5 7-5s6 1.5 7 5"/></svg>You</button>
+      </nav>
+      <div class="sheet-wrap" id="adjust" hidden>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="adjT" id="sheet">
+          <div class="grab" aria-hidden="true"></div>
+          <div class="sheet-head"><h2 id="adjT">Adjust your plan</h2><button type="button" class="sheet-x" id="adjX" aria-label="Close">×</button></div>
+      <div class="tune" id="tune">
+        <div class="tune-row">
+          <div class="bud-row"><p class="sh-lab" style="margin:0">Budget</p><span class="bview" role="group" aria-label="Show budget per"><button type="button" id="bvMonth" aria-pressed="${monthView}">Month</button><button type="button" id="bvDay" aria-pressed="${!monthView}">Day</button></span></div>
+          <div class="bud-big" id="tb">${budTxt()}</div>
+          <input type="range" id="tBudget" min="40" max="500" step="10" value="${S.budget}" aria-label="Daily budget">
+          <p class="hint-sm" style="margin:0">Extra food only. Mess fees aren't counted.</p>
+        </div>
+        <div class="tune-row">
+          <p class="sh-lab">What should the plan do first?</p>
+          <div class="radios" role="radiogroup" aria-label="Plan style">
+            ${[["cheap", "Hit my protein, as cheaply as possible", "Lowest cost"], ["balanced", "Balanced, more variety", "A mix of foods"], ["tasty", "Tastier: dairy, eggs, chicken", "Costs a bit more"]].map(([k, t, d]) =>
+              `<button type="button" data-style="${k}" aria-pressed="${(S.style || "balanced") === k}"><b>${t}</b><span data-style-sum="${k}">${d}</span></button>`).join("")}
+          </div>
+        </div>
+        <div class="tune-row">
+          <p class="sh-lab">Goal</p>
+          <div class="goal3" role="radiogroup" aria-label="Goal">${[["fit", "Stay fit"], ["muscle", "Build muscle"], ["lose", "Lose fat"]].map(([k, t]) =>
+            `<button type="button" data-goal="${k}" aria-pressed="${S.goal === k}">${t}</button>`).join("")}</div>
+          <p class="tgt-line">${t.protein} g protein · ${fmt(t.kcal)} kcal a day. <button type="button" class="link" id="tgtToggle" aria-expanded="${tgtOpen}">${tgtOpen ? "Hide the numbers" : "Change the numbers"}</button></p>
+        </div>
+        <div class="tune-row" id="tgtBox"${tgtOpen ? "" : " hidden"}>
+          <div class="tune-head"><span>Your targets</span>${S.myP != null || S.myK != null ? `<button type="button" class="link" id="useRec2">Use suggested (${rec().protein} g · ${fmt(rec().kcal)} kcal)</button>` : `<span>Suggested for you</span>`}</div>
+          <div id="tgts"><div class="stps2">${stepper("p", t.protein)}${stepper("k", t.kcal)}</div>
+          <div class="tune-head sub"><span>Carbs and fat</span>${t.carbs != null || t.fat != null ? `<button type="button" class="link" id="macAuto">Set both to auto</button>` : `<span>Grey = auto, we pick</span>`}</div>
+          <div class="stps2">${stepper("c", t.carbs, Math.round(T.c / 5) * 5)}${stepper("f", t.fat, Math.round(T.f / 5) * 5)}</div></div>
+          ${(() => { if (t.carbs == null || t.fat == null) return ""; const k = 4 * t.protein + 4 * t.carbs + 9 * t.fat;
+            return Math.abs(k - t.kcal) > t.kcal * 0.07 ? `<p class="hint-sm">Your protein, carbs and fat add up to ${fmt(k)} kcal, not ${fmt(t.kcal)}. <button type="button" class="link" id="fixKcal" data-v="${Math.round(k / 50) * 50}">Use ${fmt(Math.round(k / 50) * 50)} kcal</button></p>` : ""; })()}
+        </div>
+      </div>
+
+      ${S.kitchen === false ? `<div class="room">
+        <p class="sh-lab" style="margin:0">In my room</p><div class="tune-head"><span>${S.place === "pg" ? "PG room" : "Hostel room"}</span><span>${esc(gearText())}</span></div>
+        ${gearPills()}
+      </div>` : ""}
+
+          <button type="button" class="cta" id="adjDone">Update my plan</button>
+        </div>
       </div>
     </section>`;
 
@@ -2116,7 +2188,7 @@ __PLAN__
         const mm = messMac(meal, n);
         const mp = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.p, 0) + mm.p;
         const mk = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.kcal, 0) + mm.kcal;
-        return body ? `<h3 class="meal">${meal}<span>${fmt(mp)} g protein · ${fmt(mk)} kcal</span></h3><ul class="foods">${body}</ul>` : "";
+        return body ? `<div class="meal-card"><h3 class="meal">${meal}<span>${fmt(mp)} g protein · ${fmt(mk)} kcal</span></h3><ul class="foods">${body}</ul></div>` : "";
       };
       const daysRow = `<div class="days" role="radiogroup" aria-label="Day of the week">${[0, 1, 2, 3, 4, 5, 6].map(i =>
           `<button type="button" role="radio" class="dchip${i && !isPro() ? " locked" : ""}" data-day="${i}" aria-checked="${i === selDay}">${dayName(i)}${i && !isPro() ? `<span class="sr-only"> (Pro)</span>` : ""}</button>`).join("")}</div>`;
@@ -2327,18 +2399,46 @@ __PLAN__
         save(); result();
       }));
     };
-    const draw = () => ({ day: drawDay, shop: drawShop, out: drawOut }[tab])();
+    const draw = () => { if (tab !== "you") ({ day: drawDay, shop: drawShop, out: drawOut }[tab])(); };
     draw();
+    const showView = () => { screen.querySelector(".result").dataset.view = tab === "you" ? "you" : tab === "day" ? "day" : "other"; $("#siteFoot").hidden = tab !== "you"; };
+    showView();
 
     screen.querySelectorAll("[role=tab]").forEach(b => b.addEventListener("click", () => {
       tab = b.dataset.tab;
       screen.querySelectorAll("[role=tab]").forEach(x => x.setAttribute("aria-selected", x === b));
-      draw();
+      showView(); draw(); window.scrollTo(0, 0);
     }));
+    // Adjust sheet: budget, what the plan does first, goal, targets and room gear. It stays open while the plan redraws.
+    const sheetWrap = $("#adjust"), sheetEl = $("#sheet");
+    const openAdj = () => { adjOpen = true; sheetWrap.hidden = false; document.body.style.overflow = "hidden"; sheetEl.scrollTop = adjScroll; fillStyleSums(); };
+    const closeAdj = () => { adjOpen = false; adjScroll = 0; sheetWrap.hidden = true; document.body.style.overflow = ""; $("#adjustBtn").focus(); };
+    // Each choice shows what today's plan would be with it
+    const fillStyleSums = () => setTimeout(() => {
+      if (!adjOpen) return;
+      ["cheap", "balanced", "tasty"].forEach(k => {
+        const el = screen.querySelector(`[data-style-sum="${k}"]`); if (!el) return;
+        try { const w = planWeek(FOODS, Object.assign(opts(), { style: k }), solver), q = w.ok ? (parity % 2 === 0 ? w.A : w.B) : null;
+          if (q) el.textContent = `Today: ${fmt(q.totals.p)} g for ₹${fmt(q.totals.cost + outSum("price"))}${q.totals.p < t.protein - 0.5 ? ` · ${fmt(t.protein - q.totals.p)} g short` : ""}`; } catch (e) {}
+      });
+    }, 30);
+    $("#adjustBtn").addEventListener("click", openAdj);
+    $("#adjX").addEventListener("click", closeAdj);
+    $("#adjDone").addEventListener("click", closeAdj);
+    sheetWrap.addEventListener("click", (e) => { if (e.target === sheetWrap) closeAdj(); });
+    sheetWrap.addEventListener("keydown", (e) => { if (e.key === "Escape") closeAdj(); });
+    sheetEl.addEventListener("scroll", () => { adjScroll = sheetEl.scrollTop; }, { passive: true });
+    if (adjOpen) openAdj(); else document.body.style.overflow = "";
+    const setBview = (v) => { lsSet("mbp_bview", v === "day" ? "day" : null); result(); };
+    $("#bvMonth").addEventListener("click", () => setBview("month"));
+    $("#bvDay").addEventListener("click", () => setBview("day"));
+    screen.querySelectorAll("[data-goal]").forEach(b => b.addEventListener("click", () => { S.goal = b.dataset.goal; save(); result(); }));
+    $("#tgtToggle").addEventListener("click", () => { tgtOpen = !tgtOpen; result(); });
     const r = $("#tBudget"); setFill(r);
     let tm;
     r.addEventListener("input", () => {
-      setFill(r); $("#tb").textContent = "₹" + r.value;
+      setFill(r); const v = +r.value;
+      $("#tb").innerHTML = ls("mbp_bview") !== "day" ? `₹${fmt(v * 30)}<small>a month · about ₹${v} a day</small>` : `₹${v}<small>a day · about ₹${fmt(v * 30)} a month</small>`;
       clearTimeout(tm); tm = setTimeout(() => { S.budget = +r.value; save(); result(); $("#tBudget").focus(); }, 250);
     });
     let rt;
@@ -2489,7 +2589,7 @@ __PLAN__
   try { resumed = JSON.parse(sessionStorage.getItem("mbp_resume") || "null"); sessionStorage.removeItem("mbp_resume"); } catch (e) {}
   if (resumed) {
     if (resumed.guest && resumed.step >= 0 && (resumed.step < 4 || hasPlan())) { S.guest = true; S.step = resumed.step; }
-    if (["day", "shop", "out"].includes(resumed.tab)) tab = resumed.tab;
+    if (["day", "shop", "out", "you"].includes(resumed.tab)) tab = resumed.tab;
     if (resumed.y > 0) setTimeout(() => window.scrollTo(0, resumed.y), 900);
   }
   // The old "account" was only an email typed on this device; real sign-in replaces it (the plan is kept)
