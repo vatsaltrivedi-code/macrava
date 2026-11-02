@@ -429,6 +429,14 @@ li.ate .n { text-decoration: line-through; color: var(--muted); }
 .nudge { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1.5px dashed var(--hair); border-radius: 14px; padding: 10px 12px; font-size: 13.5px; margin-top: 10px; }
 .nudge span { flex: 1; }
 .nudge .x, .save-card .x { background: none; border: 0; color: var(--muted); font-size: 18px; cursor: pointer; padding: 0 4px; }
+.upnext { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
+.upnext > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.upnext .un-k { font-size: 12px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.upnext b { font-size: 15.5px; font-weight: 600; overflow-wrap: anywhere; }
+.upnext .un-m { font-size: 12.5px; color: var(--muted); }
+.upnext .un-act { display: flex; flex-direction: column; align-items: stretch; gap: 2px; flex: none; }
+.upnext .un-act button { min-height: 44px; }
+.upnext .un-act .link { color: var(--muted); font-weight: 500; }
 .hint-sm { font-size: 12.5px; color: var(--muted); margin: 10px 0 0; }
 .people { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
 .loc { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: var(--muted); }
@@ -1811,7 +1819,7 @@ __PLAN__
     }));
     const again = root.querySelector("#proAgain"); if (again) again.addEventListener("click", () => { lsSet("mbp_pro", null); redraw(); });
   }
-  let selDay = 0, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
+  let selDay = 0, upNextOff = false, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
   function result() {
     const t = targets();
     const o = opts();
@@ -2067,13 +2075,15 @@ __PLAN__
       }
       const dayKey = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
       const logged = (n) => ((S.log || {})[dayKey(n)] || [0])[0] > 0;
-      let streak = 0; for (let n = logged(0) ? 0 : 1; logged(n); n++) streak++;
+      // Never miss twice: one missed day keeps the streak, two in a row end it. It counts days with a tick.
+      let streak = 0, missed = 0;
+      for (let n = logged(0) ? 0 : 1; n < 120; n++) { if (logged(n)) { streak++; missed = 0; } else if (++missed > 1) break; }
       const hit = Math.round(eaten) >= goal;   // compare what we show: 125.6 g reads as 126 of 126
       const pct = Math.round(eaten / goal * 100), left = Math.max(0, goal - Math.round(eaten));
       const week = [6, 5, 4, 3, 2, 1, 0].map(n => { const v = (S.log || {})[dayKey(n)], f = v && v[1] ? Math.min(1, v[0] / v[1]) : 0;
         const d = new Date(); d.setDate(d.getDate() - n);
         return `<div class="e-day${f >= 1 ? " hit" : ""}${n === 0 ? " today" : ""}" title="${v ? fmt(v[0]) + " of " + fmt(v[1]) + " g" : "Nothing ticked"}"><i style="--f:${f.toFixed(2)}"></i><span>${n === 0 ? "Today" : d.toLocaleDateString("en-IN", { weekday: "narrow" })}</span></div>`; }).join("");
-      const msg = eaten <= 0 ? (streak ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : "Tick a food when you eat it to start your streak.")
+      const msg = eaten <= 0 ? (streak ? (logged(1) ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : `You missed yesterday. Tick something today to keep your <b>${streak}-day streak</b>.`) : "Tick a food when you eat it to start your streak.")
         : hit ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
       const showNudge = isToday && eaten > 0 && !standalone() && (installEvt || isIOS) && !ls("mbp_nudge_off");
       const eatenCard = `<div class="eaten${hit ? " done" : ""}"><span>Eaten today</span><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
@@ -2086,6 +2096,19 @@ __PLAN__
           <button type="button" class="w-link" id="saveEmail">or use email</button>
           <button type="button" class="x" id="saveX" aria-label="Hide this">×</button></div>` : ""}
           ${showNudge ? `<div class="nudge"><span>Add Macrava to your home screen so ticking takes one tap.</span><button type="button" class="btn-sm" id="nudgeAdd">Add</button><button type="button" class="x" id="nudgeX" aria-label="Hide this">×</button></div>` : ""}`;
+      // Up next: the first food not ticked yet, one tap to count it (the tap reuses the normal tick button logic)
+      let upNext = "";
+      if (isToday && !upNextOff && !hit) {
+        let nx = null;
+        for (const meal of ["Breakfast", "Lunch", "Snacks", "Dinner"]) {
+          for (const r of rows[meal]) { const k = meal + ":" + r.it.food.id; if (!nx && !ate.has(k)) nx = { key: k, meal, name: r.it.food.name, p: r.it.grams * r.share * r.it.food.p }; }
+          const n = messIn(meal); if (!nx && n && !ate.has(meal + ":mess")) nx = { key: meal + ":mess", meal, name: "Mess or home food", p: messMac(meal, n).p };
+          if (nx) break;
+        }
+        if (nx) upNext = `<div class="upnext" role="region" aria-label="Up next"><div><span class="un-k">Up next · ${nx.meal}</span><b>${esc(nx.name)}</b>
+          <span class="un-m">≈${fmt(nx.p)} g protein · one tap to count it</span></div>
+          <div class="un-act"><button type="button" class="btn-sm" data-upnext="${nx.key}" aria-label="I ate ${esc(nx.name)}">I ate this</button><button type="button" class="link" id="upNo">Not yet</button></div></div>`;
+      }
       const sec = (meal) => {
         const mess = messRow(meal, messIn(meal));
         const body = rows[meal].map(r => foodRow(meal, r)).join("") + mess;
@@ -2105,7 +2128,7 @@ __PLAN__
       panel.innerHTML = `${daysRow}
         ${!isPro() ? `<p class="hint-sm">Today's cheapest plan. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
-        ${isToday ? eatenCard + gapNote : ""}
+        ${isToday ? eatenCard + upNext + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
         ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
@@ -2149,6 +2172,8 @@ __PLAN__
         const after = ((S.log || {})[today] || [0])[0];
         if (before < goal && after >= goal) toast("Goal hit! 🎉 Come back tomorrow to keep your streak.");
       }));
+      panel.querySelectorAll("[data-upnext]").forEach(b => b.addEventListener("click", () => { const t = panel.querySelector(`.tick-btn[data-ate="${b.dataset.upnext}"]`); if (t) t.click(); }));  // same path as ticking the row
+      const un = $("#upNo"); if (un) un.addEventListener("click", () => { upNextOff = true; drawDay(); });
       const na = $("#nudgeAdd"); if (na) na.addEventListener("click", () => $("#installBtn").click());
       const nx = $("#nudgeX"); if (nx) nx.addEventListener("click", () => { lsSet("mbp_nudge_off", "1"); drawDay(); });
       bindGoogle($("#saveGoogle"));
