@@ -1,0 +1,13 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.macrava.app",
+      "sha256_cert_fingerprints": [
+        "CA:5B:7C:D5:71:E5:D9:AF:D7:04:E6:A4:F6:30:87:A3:14:2F:01:8D:EE:EC:41:CA:67:AC:83:F7:94:72:DE:DB",
+        "CF:84:79:8B:0A:5A:B4:B5:8D:E4:9E:AD:C2:0C:EB:B6:BD:66:DB:29:6C:84:81:30:7E:E4:00:8D:16:43:BB:AC"
+      ]
+    }
+  }
+]
