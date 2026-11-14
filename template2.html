@@ -216,6 +216,10 @@ body:has(.bnav) .toast { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); 
 .radios span { font-size: 13px; color: var(--muted); }
 .goal3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .goal3 button { border: 1.5px solid var(--hair); background: var(--surface); color: var(--ink); border-radius: 12px; padding: 11px 6px; font: 600 14px var(--font); cursor: pointer; }
+.goal3.meals4 { grid-template-columns: repeat(4, 1fr); }
+.alt-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 4px 0 12px; font-size: 14px; color: var(--muted); }
+.alt-bar > span { flex: 1 1 auto; }
+.alt-bar b { color: var(--ink); }
 .goal3 button[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
 .tgt-line { font-size: 13px; color: var(--muted); margin: 8px 0 0; }
 .sheet .tune, .sheet .room { background: none; border: 0; padding: 0; }
@@ -323,6 +327,8 @@ ul.foods li.plate-ed { padding: 14px; }
 ul.pl-list { list-style: none; margin: 0; padding: 0; }
 ul.pl-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-top: 1px solid var(--hair); }
 ul.pl-list li:first-child { border-top: 0; }
+ul.pl-list li.pl-grp { display: block; border-top: 0; padding: 12px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+ul.pl-list li.pl-grp + li { border-top: 0; }
 .pl-n { display: flex; flex-direction: column; min-width: 0; font-size: 15px; }
 .pl-n small { color: var(--muted); font-size: 12px; }
 .pl-step { display: flex; align-items: center; gap: 10px; flex: none; }
@@ -650,22 +656,41 @@ __PLAN__
 
   // Answers. Saved in this browser only, so returning visitors land on their plan.
   // Mess/home plate items: rough values for one usual portion (a katori is about 150 ml). Estimates, not lab values.
+  // [key, name, unit, macros, group, diet]: diet "egg" hides it for vegetarians, "nonveg" for veg and veg + eggs.
   const PLATE = [
-    ["roti", "Roti / chapati", "roti", { p: 3, kcal: 100, c: 18, f: 2 }],
-    ["rice", "Rice", "katori", { p: 4, kcal: 200, c: 43, f: 0.5 }],
-    ["dal", "Dal", "katori", { p: 6, kcal: 140, c: 18, f: 4 }],
-    ["rajma", "Rajma / chole", "katori", { p: 8, kcal: 210, c: 28, f: 7 }],
-    ["paneer", "Paneer sabzi", "katori", { p: 9, kcal: 230, c: 8, f: 17 }],
-    ["sabzi", "Veg sabzi", "katori", { p: 3, kcal: 130, c: 12, f: 8 }],
-    ["egg", "Egg (boiled or curry)", "egg", { p: 6, kcal: 90, c: 1, f: 6 }],
-    ["chicken", "Chicken curry", "katori", { p: 18, kcal: 250, c: 6, f: 15 }],
-    ["curd", "Curd / raita", "katori", { p: 4, kcal: 70, c: 5, f: 3.5 }],
-    ["paratha", "Paratha", "paratha", { p: 4, kcal: 220, c: 30, f: 9 }],
-    ["poha", "Poha / upma", "plate", { p: 5, kcal: 250, c: 40, f: 8 }],
-    ["milk", "Milk", "glass", { p: 6, kcal: 120, c: 10, f: 6 }],
+    ["roti", "Roti / chapati", "roti", { p: 3, kcal: 100, c: 18, f: 2 }, "Roti, rice & bread"],
+    ["paratha", "Paratha", "paratha", { p: 4, kcal: 220, c: 30, f: 9 }, "Roti, rice & bread"],
+    ["aloopar", "Aloo / stuffed paratha", "paratha", { p: 5, kcal: 290, c: 40, f: 11 }, "Roti, rice & bread"],
+    ["poori", "Poori", "poori", { p: 1.5, kcal: 100, c: 12, f: 5 }, "Roti, rice & bread"],
+    ["breadsl", "Bread slice", "slice", { p: 2.5, kcal: 75, c: 14, f: 1 }, "Roti, rice & bread"],
+    ["rice", "Rice", "katori", { p: 4, kcal: 200, c: 43, f: 0.5 }, "Roti, rice & bread"],
+    ["khichdi", "Khichdi", "katori", { p: 6, kcal: 200, c: 32, f: 5 }, "Roti, rice & bread"],
+    ["pulao", "Veg pulao / fried rice", "plate", { p: 6, kcal: 350, c: 58, f: 9 }, "Roti, rice & bread"],
+    ["dal", "Dal", "katori", { p: 6, kcal: 140, c: 18, f: 4 }, "Dal, curry & sabzi"],
+    ["rajma", "Rajma / chole", "katori", { p: 8, kcal: 210, c: 28, f: 7 }, "Dal, curry & sabzi"],
+    ["kadhi", "Kadhi", "katori", { p: 4, kcal: 150, c: 12, f: 9 }, "Dal, curry & sabzi"],
+    ["sambar", "Sambar", "katori", { p: 4, kcal: 110, c: 15, f: 3 }, "Dal, curry & sabzi"],
+    ["paneer", "Paneer sabzi", "katori", { p: 9, kcal: 230, c: 8, f: 17 }, "Dal, curry & sabzi"],
+    ["soya", "Soya chunk curry", "katori", { p: 12, kcal: 180, c: 12, f: 8 }, "Dal, curry & sabzi"],
+    ["sabzi", "Veg sabzi / aloo, mix veg", "katori", { p: 3, kcal: 130, c: 12, f: 8 }, "Dal, curry & sabzi"],
+    ["egg", "Egg (boiled or curry)", "egg", { p: 6, kcal: 90, c: 1, f: 6 }, "Eggs, chicken & fish", "egg"],
+    ["omelette", "Omelette / bhurji, 2 eggs", "plate", { p: 12, kcal: 200, c: 2, f: 15 }, "Eggs, chicken & fish", "egg"],
+    ["chicken", "Chicken curry", "katori", { p: 18, kcal: 250, c: 6, f: 15 }, "Eggs, chicken & fish", "nonveg"],
+    ["biryani", "Chicken biryani", "plate", { p: 20, kcal: 500, c: 60, f: 18 }, "Eggs, chicken & fish", "nonveg"],
+    ["fish", "Fish curry", "katori", { p: 16, kcal: 220, c: 5, f: 13 }, "Eggs, chicken & fish", "nonveg"],
+    ["poha", "Poha / upma", "plate", { p: 5, kcal: 250, c: 40, f: 8 }, "Breakfast & South Indian"],
+    ["idli", "Idli", "idli", { p: 2, kcal: 60, c: 12, f: 0.4 }, "Breakfast & South Indian"],
+    ["dosa", "Dosa (plain or masala)", "dosa", { p: 4, kcal: 200, c: 30, f: 7 }, "Breakfast & South Indian"],
+    ["sprouts", "Sprouts / chana chaat", "katori", { p: 7, kcal: 110, c: 18, f: 1 }, "Breakfast & South Indian"],
+    ["curd", "Curd / raita", "katori", { p: 4, kcal: 70, c: 5, f: 3.5 }, "Sides & drinks"],
+    ["milk", "Milk", "glass", { p: 6, kcal: 120, c: 10, f: 6 }, "Sides & drinks"],
+    ["chaas", "Chaas / lassi", "glass", { p: 3, kcal: 80, c: 7, f: 3 }, "Sides & drinks"],
+    ["kheer", "Kheer / halwa", "katori", { p: 5, kcal: 230, c: 32, f: 9 }, "Sides & drinks"],
+    ["banana", "Banana", "banana", { p: 1.3, kcal: 105, c: 27, f: 0.4 }, "Sides & drinks"],
   ];
+  const plateFor = (diet) => PLATE.filter(x => !x[5] || (x[5] === "egg" ? diet !== "veg" : diet === "nonveg" || !diet));
   const PLATE_BY = new Map(PLATE.map(x => [x[0], x]));
-  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false }, plates: {}, log: {} };
+  const DEFAULTS = { diet: null, kitchen: null, meals: 0, weight: 70, goal: "muscle", budget: 200, step: -1, name: null, exclude: [], myP: null, myK: null, myC: null, myF: null, out: [], rte: [], style: "balanced", city: null, area: "", people: 1, ate: {}, place: null, pgKitchen: true, myPrices: {}, sex: null, age: 19, height: 170, activity: "light", gear: { kettle: false, microwave: false, fridge: false }, plates: {}, log: {}, variant: 0 };
   const FOOD_BY_KEY = new Map(FOODS.map(f => [f.key, f]));
   const CITY_LIST = ["Delhi NCR", "Bengaluru", "Mumbai", "Pune", "Hyderabad", "Chennai", "Kolkata", "Ahmedabad",
     "Jaipur", "Chandigarh", "Lucknow", "Indore", "Bhopal", "Dehradun", "Other"];
@@ -693,6 +718,7 @@ __PLAN__
     pick("city", [null].concat(CITY_LIST));
     num("meals", 0, 3); o.meals = Math.round(o.meals);
     num("weight", 35, 150); num("budget", 40, 500); num("people", 1, 4); o.people = Math.round(o.people);
+    num("variant", 0, 9); o.variant = Math.round(o.variant);
     num("age", 15, 70); num("height", 135, 210); num("step", -1, 4); o.step = Math.round(o.step);
     o.updatedAt = 0; num("updatedAt", 0, 1e14); o.updatedAt = Math.round(o.updatedAt);
     num("myP", 30, 300, true); num("myK", 1000, 5000, true); num("myC", 20, 700, true); num("myF", 10, 250, true);
@@ -1146,7 +1172,9 @@ __PLAN__
     addEventListener("focus", check);
     addEventListener("online", check);
   }
-  function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); if (step >= 0 && step <= 3) track("q" + step); }   // which quiz question people reach
+  // Came to the questions from the plan ("Change my answers"): every question offers a way straight back
+  let fromPlan = false;
+  function go(step) { if (step === 4) { fromPlan = false; tab = "day"; selDay = 0; } if (step < 4) S.variant = 0; S.step = step; save(); render(); window.scrollTo(0, 0); if (step >= 0 && step <= 3) track("q" + step); }   // which quiz question people reach
 
   function chrome() {
     const quiz = S.step >= 0 && S.step < 4;
@@ -1198,6 +1226,22 @@ __PLAN__
     }
     if (S.step < 0) return welcome();
     [stepDiet, stepLife, stepBody, stepBudget, result][S.step]();
+    if (S.step >= 0 && S.step < 4) planShortcut();
+  }
+  // Changing answers from the plan: "Show my updated plan" on every question, "Next question" to keep going
+  function planShortcut() {
+    if (!fromPlan || !hasPlan()) return;
+    const nx = $("#next"), sec = screen.querySelector(".step");
+    if (!sec) return;
+    if (S.step === 3) { if (nx) nx.textContent = "Show my updated plan"; return; }
+    const b = document.createElement("button"); b.type = "button"; b.className = "cta"; b.id = "toPlan"; b.textContent = "Show my updated plan";
+    b.addEventListener("click", () => go(4));
+    if (nx) { nx.className = "ghost"; nx.textContent = "Next question"; nx.before(b); }
+    else {
+      const n2 = document.createElement("button"); n2.type = "button"; n2.className = "ghost"; n2.id = "next"; n2.textContent = "Next question";
+      n2.addEventListener("click", () => go(S.step + 1));
+      sec.append(b, n2);
+    }
   }
 
   // 0. Welcome and sign-in (Google, or email + password via Supabase), or guest on this device only.
@@ -1551,7 +1595,7 @@ __PLAN__
     screen.querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
       S.diet = b.dataset.v; S.exclude = []; save();
       screen.querySelectorAll(".opt").forEach(x => x.setAttribute("aria-pressed", x === b));
-      setTimeout(() => go(1), 180);
+      if (!fromPlan) setTimeout(() => go(1), 180);
     }));
   }
 
@@ -1563,7 +1607,7 @@ __PLAN__
   function wireGear(root, after) {
     root.querySelectorAll("[data-gear]").forEach(b => b.addEventListener("click", () => {
       S.gear = Object.assign({ kettle: false, microwave: false, fridge: false }, S.gear);
-      S.gear[b.dataset.gear] = !S.gear[b.dataset.gear]; S.exclude = []; save();
+      S.gear[b.dataset.gear] = !S.gear[b.dataset.gear]; S.exclude = []; S.variant = 0; save();
       b.setAttribute("aria-pressed", S.gear[b.dataset.gear]); after();
     }));
   }
@@ -1867,10 +1911,23 @@ __PLAN__
     const again = root.querySelector("#proAgain"); if (again) again.addEventListener("click", () => { lsSet("mbp_pro", null); redraw(); });
   }
   let selDay = 0, upNextOff = false, adjOpen = false, adjScroll = 0, tgtOpen = false, priceEdit = null, plateEdit = null, plateDraft = null, tab = "day", outChain = "All", outSort = "rupee", outShow = 15, outSrc = "rest", outPriced = true;
+  // Plan options: option 1 is the usual plan; "Another plan" leans away from the foods earlier options used,
+  // at about the same price. Worked out once per set of answers (it's a few extra solves).
+  const altCache = new Map();
+  function altFor(o, n) {
+    const key = JSON.stringify([o, n]);
+    if (!altCache.has(key)) { if (altCache.size > 24) altCache.clear(); altCache.set(key, altOptions(FOODS, o, solver, n)); }
+    return altCache.get(key);
+  }
   function result() {
     const t = targets();
     const o = opts();
-    const W = planWeek(FOODS, o, solver);
+    let alt = S.variant ? altFor(o, S.variant) : {};
+    if (alt.same) {   // no different plan left at this price: back to option 1
+      S.variant = 0; save(); alt = {};
+      setTimeout(() => toast("No other plan fits this price and target. Back to option 1. A bit more budget, or a swap, opens up more."), 50);
+    }
+    const W = planWeek(FOODS, alt.penalty ? Object.assign({}, o, { penalty: alt.penalty, budget: alt.budget }) : o, solver);
     // Two day-plans alternate through the week; which one is "today" follows the calendar
     const parity = Math.floor((Date.now() - new Date().getTimezoneOffset() * 60000) / 864e5) % 2;
     const planFor = (i) => (parity + i) % 2 === 0 ? W.A : W.B;
@@ -1882,7 +1939,7 @@ __PLAN__
       screen.innerHTML = `<section class="result"><h1>No plan fits.</h1>
         <p class="q-sub" style="margin:0">Try a lower protein target, or say you can cook to unlock more foods.</p>
         <button type="button" class="ghost" id="restart">Change my answers</button></section>`;
-      $("#restart").addEventListener("click", () => go(0));
+      $("#restart").addEventListener("click", () => { fromPlan = true; go(0); });
       return;
     }
     const T = Object.assign({}, p.totals);
@@ -2002,6 +2059,12 @@ __PLAN__
           <p class="hint-sm" style="margin:0">Extra food only. Mess fees aren't counted.</p>
         </div>
         <div class="tune-row">
+          <p class="sh-lab">Mess, PG or home meals a day</p>
+          <div class="goal3 meals4" role="radiogroup" aria-label="Mess meals a day">${[0, 1, 2, 3].map(n =>
+            `<button type="button" data-meals="${n}" aria-pressed="${(S.meals || 0) === n}">${n === 0 ? "None" : n}</button>`).join("")}</div>
+          <p class="hint-sm" style="margin:0">${S.meals ? `Counted as about ${S.meals * MESS.p} g protein. ${S.meals === 3 ? "Breakfast, lunch and dinner" : S.meals === 2 ? "Lunch and dinner" : "Lunch"} come from the mess.` : "The plan covers every meal."}</p>
+        </div>
+        <div class="tune-row">
           <p class="sh-lab">What should the plan do first?</p>
           <div class="radios" role="radiogroup" aria-label="Plan style">
             ${[["cheap", "Hit my protein, as cheaply as possible", "Lowest cost"], ["balanced", "Balanced, more variety", "A mix of foods"], ["tasty", "Tastier: dairy, eggs, chicken", "Costs a bit more"]].map(([k, t, d]) =>
@@ -2080,10 +2143,10 @@ __PLAN__
       const messMac = (meal, n) => { const pl = isToday && n ? plateOf(meal) : null;
         return pl ? Object.assign(plateSum(pl), { logged: true }) : { p: n * MESS.p, kcal: n * MESS.kcal, c: n * MESS.c, f: n * MESS.f, logged: false }; };
       const plateText = (pl) => Object.entries(pl).map(([k, n]) => { const x = PLATE_BY.get(k);
-        return x[2] === "katori" || x[2] === "plate" || x[2] === "glass" ? `${n > 1 ? n + " " : ""}${x[1].split(" /")[0].toLowerCase()}` : `${n} ${x[1].split(" /")[0].split(" (")[0].toLowerCase()}`; }).join(", ");
+        return x[2] === "katori" || x[2] === "plate" || x[2] === "glass" || x[2] === "slice" ? `${n > 1 ? n + " " : ""}${x[1].split(" /")[0].toLowerCase()}` : `${n} ${x[1].split(" /")[0].split(" (")[0].toLowerCase()}`; }).join(", ");
       const plateEditor = (meal) => `<li class="pedit plate-ed"><div class="pl-head">What was on your ${meal.toLowerCase()} plate?</div>
-          <ul class="pl-list">${PLATE.filter(([k]) => !(S.diet === "veg" && (k === "egg" || k === "chicken")) && !(S.diet === "egg" && k === "chicken")).map(([k, name, unit, v]) => { const n = plateDraft[k] || 0;
-            return `<li><span class="pl-n">${esc(name)}<small>${v.p} g protein per ${unit}</small></span>
+          <ul class="pl-list">${plateFor(S.diet).map(([k, name, unit, v, grp], i, all) => { const n = plateDraft[k] || 0;
+            return `${!i || all[i - 1][4] !== grp ? `<li class="pl-grp">${esc(grp)}</li>` : ""}<li><span class="pl-n">${esc(name)}<small>${v.p} g protein per ${unit}</small></span>
               <span class="pl-step"><button type="button" class="pl-b" data-pl-dec="${k}" aria-label="One less ${esc(name)}"${n ? "" : " disabled"}>−</button>
               <b aria-live="polite">${n}</b><button type="button" class="pl-b" data-pl-inc="${k}" aria-label="One more ${esc(name)}">+</button></span></li>`; }).join("")}</ul>
           <p class="pl-tot">${(() => { const s = plateSum(plateDraft); return `≈ ${fmt(s.p)} g protein · ${fmt(s.kcal)} kcal`; })()}</p>
@@ -2190,6 +2253,11 @@ __PLAN__
         const mk = rows[meal].reduce((a, r) => a + r.it.grams * r.share * r.it.food.kcal, 0) + mm.kcal;
         return body ? `<div class="meal-card"><h3 class="meal">${meal}<span>${fmt(mp)} g protein · ${fmt(mk)} kcal</span></h3><ul class="foods">${body}</ul></div>` : "";
       };
+      // compare like with like: today's day of this option against the same day of option 1
+      const altDiff = S.variant && alt.baseCosts ? p.totals.cost - alt.baseCosts[p === W.A ? 0 : 1] : null;
+      const altBar = `<div class="alt-bar"><span>Plan option <b>${(S.variant || 0) + 1}</b>${!S.variant ? "" : altDiff == null ? " · same budget, other foods"
+          : Math.abs(altDiff) < 1 ? " · same price as option 1" : ` · ₹${fmt(Math.abs(altDiff))} ${altDiff > 0 ? "more" : "less"} than option 1`}</span>
+        <button type="button" class="btn-sm ghosty" id="altNext">↻ Another plan</button>${S.variant ? `<button type="button" class="link" id="altFirst">Back to option 1</button>` : ""}</div>`;
       const daysRow = `<div class="days" role="radiogroup" aria-label="Day of the week">${[0, 1, 2, 3, 4, 5, 6].map(i =>
           `<button type="button" role="radio" class="dchip${i && !isPro() ? " locked" : ""}" data-day="${i}" aria-checked="${i === selDay}">${dayName(i)}${i && !isPro() ? `<span class="sr-only"> (Pro)</span>` : ""}</button>`).join("")}</div>`;
       if (!isToday && !isPro()) {
@@ -2198,8 +2266,9 @@ __PLAN__
         wirePro(panel, drawDay); return;
       }
       panel.innerHTML = `${daysRow}
-        ${!isPro() ? `<p class="hint-sm">Today's cheapest plan. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
+        ${!isPro() ? `<p class="hint-sm">${S.variant ? "Today's plan, option " + (S.variant + 1) : "Today's cheapest plan"}. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
+        ${isToday ? altBar : ""}
         ${isToday ? eatenCard + upNext + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
@@ -2269,6 +2338,12 @@ __PLAN__
         S.out[+inp.dataset.i].price = inp.value === "" ? null : Math.max(0, +inp.value); save(); result();
       }));
       const u = $("#undo"); if (u) u.addEventListener("click", () => { S.exclude = []; save(); result(); });
+      const an = $("#altNext"); if (an) an.addEventListener("click", () => {
+        an.disabled = true; an.textContent = "Finding one…";
+        S.variant = Math.min(9, (S.variant || 0) + 1); save();
+        setTimeout(result, 30);   // let the button repaint before the solver runs
+      });
+      const af = $("#altFirst"); if (af) af.addEventListener("click", () => { S.variant = 0; save(); result(); });
     };
     const drawShop = () => {
       if (!isPro()) { panel.innerHTML = proCard("shop"); wirePro(panel, drawShop); return; }
@@ -2433,6 +2508,7 @@ __PLAN__
     $("#bvMonth").addEventListener("click", () => setBview("month"));
     $("#bvDay").addEventListener("click", () => setBview("day"));
     screen.querySelectorAll("[data-goal]").forEach(b => b.addEventListener("click", () => { S.goal = b.dataset.goal; save(); result(); }));
+    screen.querySelectorAll("[data-meals]").forEach(b => b.addEventListener("click", () => { S.meals = +b.dataset.meals; S.exclude = []; S.variant = 0; plateEdit = null; save(); result(); }));
     $("#tgtToggle").addEventListener("click", () => { tgtOpen = !tgtOpen; result(); });
     const r = $("#tBudget"); setFill(r);
     let tm;
@@ -2472,8 +2548,8 @@ __PLAN__
     const fp = $("#fixProtein"); if (fp) fp.addEventListener("click", () => { S.myP = +fp.dataset.v; save(); result(); });
     const fk = $("#fixKcal"); if (fk) fk.addEventListener("click", () => { S.myK = Math.min(5000, Math.max(1000, +fk.dataset.v)); save(); result(); });
     const ur = $("#useRec2"); if (ur) ur.addEventListener("click", () => { S.myP = null; S.myK = null; S.myC = null; S.myF = null; save(); result(); });
-    $("#restart").addEventListener("click", () => go(0));
-    screen.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => { S.style = b.dataset.style; S.exclude = []; save(); result(); }));
+    $("#restart").addEventListener("click", () => { fromPlan = true; go(0); });
+    screen.querySelectorAll("[data-style]").forEach(b => b.addEventListener("click", () => { S.style = b.dataset.style; S.exclude = []; S.variant = 0; save(); result(); }));
     const lc = $("#locChange"); if (lc) lc.addEventListener("click", () => { $("#locEdit").hidden = false; lc.hidden = true; });
     const locBtn = $("#locSave"); if (locBtn) locBtn.addEventListener("click", () => {
       S.city = $("#lCity").value || null; S.area = $("#lArea").value.trim(); save();

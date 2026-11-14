@@ -19,8 +19,10 @@ const PULSE = /dal|masoor|moong|rajma|chana|besan|sattu|soya|panchmel/i;
 //  heat      - hot water or a quick heat: an electric kettle or a microwave works (boiled eggs, instant noodles, RTE dal pouches)
 //  microwave - heat-and-eat packs
 //  fridge    - goes off at room temperature (milk pouches, curd, paneer, cold cuts)
+//  kitchen   - only planned for people with a kitchen (bread: a loaf is toast or sandwiches, not a hostel-room meal)
 function needs(f) {
   const c = f.cat, n = f.name;
+  if (c === "Bread") return ["kitchen"];
   if (c === "Grains & atta") return /sattu/i.test(n) ? [] : ["stove"];
   if (c === "Soya & dal") return /sattu/i.test(n) ? [] : /ready to eat|kitchens of india/i.test(n) ? ["heat"] : ["stove"];
   if (c === "Pasta & noodles") return /maggi|2 minutes|instant/i.test(n) ? ["heat"] : ["stove"];
@@ -41,7 +43,7 @@ const SINGLE_SERVE = (f) => f.packQty <= 250 && ["Yogurt", "Curd", "Milk", "Dair
 const DEFAULT_GEAR = { kettle: false, microwave: false, fridge: false };
 function canMake(f, gear) {
   const g = Object.assign({}, DEFAULT_GEAR, gear);
-  return needs(f).every(x => x === "stove" ? false : x === "heat" ? (g.kettle || g.microwave)
+  return needs(f).every(x => x === "stove" || x === "kitchen" ? false : x === "heat" ? (g.kettle || g.microwave)
     : x === "microwave" ? g.microwave : x === "fridge" ? (g.fridge || SINGLE_SERVE(f)) : true);
 }
 // Single cups and bottles are bought and eaten whole: give them a "unit" so plans use whole ones.
@@ -67,6 +69,7 @@ const HQ_CATS = ["Milk", "Curd", "Yogurt", "Cheese", "Paneer & tofu", "Eggs", "C
 function hq(f) {
   if (HQ_CATS.includes(f.cat)) return true;
   if (f.cat === "Soya & dal") return /soya/i.test(f.name);
+  if (f.cat === "Snacks") return /roasted soya|soyabean/i.test(f.name);   // roasted whole soybeans: still soya protein
   if (f.cat === "Protein powder" || f.cat === "Protein shake") return !/pea|plant/i.test(f.name);   // whey, milk and yeast proteins
   return false;
 }
@@ -480,4 +483,41 @@ function planWeek(foods, opts, lp) {
   return { ok: true, A, B, days, same: B === A, week, weekCost: week.reduce((s, w) => s + w.cost, 0), eatenCost: week.reduce((s, w) => s + w.eatenCost, 0) };
 }
 
-if (typeof module !== "undefined") module.exports = { planDay, planWeek, normalizeUnits, CAT_MAX, STYLE, needs, canMake, howTo, hq, QUALITY };
+// "Show me another plan": option n leans away from the foods options 0..n-1 used, so it's a different mix.
+// While option 0 hits the targets, the others must cost about the same (within ~8% or ₹5) and hit them too;
+// only if that's impossible may they use the full budget. Returns the extra settings for planWeek, or
+// { same: true } when no different plan exists.
+function altOptions(foods, opts, lp, n) {
+  const fine = (x) => x.ok && !x.closest && !x.overBudget && !x.budgetShort;
+  const ids = (x) => x.items.filter(it => !it.picked).map(it => it.food.id).sort().join(",");
+  const base = planDay(foods, opts, lp);
+  if (!base.ok || !n) return {};
+  // The week alternates two days: an option must keep both days' protein on target (or as high as option 1's when short)
+  const bw = planWeek(foods, opts, lp), floor = Math.min(bw.A.totals.p, bw.B.totals.p, opts.protein) - 0.5;   // the target, or what option 1 reaches if it's short
+  const near = (c, c0) => c <= Math.max(c0 * 1.08, c0 + 5) + 0.5;   // "about the same price", day for day
+  const weekOk = (w, strict) => w.ok && w.A.totals.p >= floor && w.B.totals.p >= floor
+    && (!strict || (near(w.A.totals.cost, bw.A.totals.cost) && near(w.B.totals.cost, bw.B.totals.cost)));
+  const pen = Object.assign({}, opts && opts.penalty), seen = new Set([ids(base)]);
+  let last = base, out = {};
+  const cap = Math.min(opts.budget, Math.ceil(Math.max(base.totals.cost * 1.08, base.totals.cost + 5)));
+  for (let i = 1; i <= n; i++) {
+    let r = null, budget = opts.budget, used = null;
+    const budgets = fine(base) ? [cap, opts.budget].filter((v, j, a) => a.indexOf(v) === j) : [opts.budget];
+    // lean away from the last option's foods: gently first (keeps the price), harder if that changes nothing
+    search: for (const bg of budgets) for (const k of [1.3, 1.8, 3]) {
+      const tryPen = Object.assign({}, pen);
+      for (const it of last.items) if (!it.picked) tryPen[it.food.id] = (tryPen[it.food.id] || 1) * k;
+      const o2 = Object.assign({}, opts, { penalty: tryPen, budget: bg });
+      const d = planDay(foods, o2, lp);
+      if (!d.ok || (fine(base) && !fine(d)) || d.totals.p < base.totals.p - 3 || seen.has(ids(d))) continue;
+      if (!weekOk(planWeek(foods, o2, lp), bg === cap && fine(base))) continue;
+      r = d; budget = bg; used = tryPen; break search;
+    }
+    if (!r) return { same: true, tried: i };
+    Object.assign(pen, used); seen.add(ids(r)); last = r;
+    out = { penalty: Object.assign({}, pen), budget, baseCosts: [bw.A.totals.cost, bw.B.totals.cost] };
+  }
+  return out;
+}
+
+if (typeof module !== "undefined") module.exports = { planDay, planWeek, altOptions, normalizeUnits, CAT_MAX, STYLE, needs, canMake, howTo, hq, QUALITY };
