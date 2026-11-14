@@ -20,7 +20,7 @@ const state = (p) => p.evaluate(() => JSON.parse(localStorage.getItem('mbp')));
       const head = () => p.$eval('h3.meal:has(+ ul li [data-plate="Dinner"]), h3.meal', e => e.innerText);
       await p.click('[data-plate="Dinner"]'); await wait(150);
       ok(!!(await p.$('.plate-ed')), 'plate editor opens');
-      ok((await p.$$('[data-pl-inc]')).length === 12, 'non-veg sees all 12 items');
+      ok((await p.$$('[data-pl-inc]')).length === 29, 'non-veg sees all 29 items');
       ok(await p.$eval('[data-pl-dec="roti"]', e => e.disabled), 'minus is disabled at zero');
       for (const k of ['roti', 'roti', 'roti', 'dal', 'egg']) await p.click(`[data-pl-inc="${k}"]`);
       ok(/≈ 21 g protein/.test(await p.$eval('.pl-tot', e => e.innerText)), 'running total: 3 roti + dal + egg = 21 g');
