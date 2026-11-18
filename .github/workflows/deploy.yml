@@ -32,6 +32,9 @@ jobs:
           echo "{\"v\":\"$GITHUB_SHA\"}" > site/version.json
           sed -i "s/__BUILD__/$GITHUB_SHA/" site/index.html
           grep -q "$GITHUB_SHA" site/index.html
+          mkdir -p site/.well-known
+          cp assetlinks.json site/.well-known/assetlinks.json
+          printf '/.well-known/assetlinks.json\n  Content-Type: application/json\n' > site/_headers
       - name: Link preview image
         continue-on-error: true
         run: |
