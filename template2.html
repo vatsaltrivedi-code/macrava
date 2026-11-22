@@ -30,6 +30,56 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
+/* Bento tiles on Today (fixed colours: same in light and dark) */
+.eaten.bento { display: flex; flex-direction: column; gap: 10px; align-items: stretch; background: none; border: 0; padding: 0; }
+.eaten.bento.done { background: none; }
+.b-tile { border-radius: 22px; padding: 14px 16px; color: #000; }
+.b-tile .b-k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: inherit; opacity: .75; }
+.b-pro { background: #FF5A1F; display: flex; justify-content: space-between; align-items: flex-end; padding: 16px 18px; border-radius: 26px; }
+.b-col { display: flex; flex-direction: column; gap: 2px; }
+.eaten .b-pro b { font-size: 64px; font-weight: 900; letter-spacing: -.05em; line-height: .95; color: #000; }
+.eaten .b-pro b small { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: #000; }
+.eaten .b-pro .b-sub { font-size: 14px; font-weight: 600; color: #000; opacity: .8; }
+.b-ring { position: relative; width: 72px; height: 72px; flex: none; }
+.b-ring svg { width: 72px; height: 72px; }
+.b-tr { fill: none; stroke: rgba(0,0,0,.15); stroke-width: 9; }
+.b-pg { fill: none; stroke: #000; stroke-width: 9; stroke-linecap: round; transition: stroke-dasharray .4s; }
+.eaten .b-ring span { position: absolute; inset: 0; display: grid; place-items: center; font-size: 14px; font-weight: 800; color: #000; }
+.b-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.b-cream { background: #F4EEE6; display: flex; flex-direction: column; gap: 2px; }
+.eaten .b-cream span { color: #000; }
+.eaten .b-cream .b-big { font-size: 30px; font-weight: 900; letter-spacing: -.03em; }
+.eaten .b-cream .b-sub { font-size: 12px; opacity: .75; }
+.b-green { background: #1F4D3A; color: #fff; display: flex; flex-direction: column; gap: 10px; justify-content: space-between; }
+.b-green .e-streak, .b-green .e-streak.off { justify-self: start; align-self: flex-start; background: none; border: 0; padding: 0; color: #fff !important; font-size: 15px; font-weight: 800; }
+.b-green .e-week { margin: 0; gap: 3px; }
+.b-green .e-day { color: #BFE3DF; font-size: 9px; gap: 3px; }
+.b-green .e-day i { width: 14px; height: 14px; border-color: rgba(255,255,255,.25); background: conic-gradient(#F7C531 calc(var(--f, 0) * 1turn), transparent 0); }
+.eaten .b-green .e-day span { color: #BFE3DF; font-size: 9px; }
+.b-green .e-day.hit i { border-color: #F7C531; background: #F7C531; }
+.b-mint { background: #BFE3DF; display: flex; gap: 10px; align-items: flex-start; }
+.b-mint svg { width: 20px; height: 20px; flex: none; margin-top: 2px; }
+.eaten .b-mint .e-msg { margin: 0; font-size: 15.5px; font-weight: 600; line-height: 1.35; color: #000; }
+.eaten .b-mint .e-msg b { color: #000; font-weight: 800; }
+.upnext { background: #F7C531 !important; border: 0 !important; border-radius: 22px !important; color: #000; padding: 14px 16px !important; }
+.upnext .un-k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #000 !important; opacity: .75; }
+.upnext b { color: #000; font-size: 17px; font-weight: 800; }
+.upnext .un-m { color: #000 !important; opacity: .75; }
+.upnext .un-act { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.un-go { border: 0; background: #000; color: #F7C531; font: 800 15px var(--font); padding: 12px 18px; border-radius: 999px; cursor: pointer; min-height: 44px; }
+.upnext .link { color: #000 !important; font-size: 12.5px; }
+.celebrate { position: fixed; inset: 0; z-index: 80; background: #000; color: #fff; display: flex; flex-direction: column; gap: 10px; padding: calc(20px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom)); max-width: 520px; margin: 0 auto; animation: in .3s ease both; }
+.cb-hero { flex: 1; min-height: 0; background: #FF5A1F; color: #000; border-radius: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 16px; }
+.cb-hero svg { width: 110px; height: 126px; }
+.cb-hero b { font-size: 120px; font-weight: 900; letter-spacing: -.06em; line-height: .85; }
+.cb-hero span { font-size: 26px; font-weight: 900; }
+.cb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cb-t { border-radius: 22px; padding: 14px 16px; color: #000; display: flex; flex-direction: column; }
+.cb-t b { font-size: 28px; font-weight: 900; } .cb-t span { font-size: 12px; }
+.cb-cream { background: #F4EEE6; } .cb-mint { background: #BFE3DF; }
+.cb-note { margin: 0; background: #F7C531; color: #000; border-radius: 22px; padding: 14px 16px; font-size: 15px; font-weight: 700; }
+.cb-share { border: 0; background: #fff; color: #000; font: 800 17px var(--font); border-radius: 20px; padding: 16px; cursor: pointer; min-height: 48px; }
+.cb-close { border: 0; background: none; color: #fff; font: 600 15px var(--font); padding: 10px; cursor: pointer; min-height: 44px; }
 /* Layout: one narrow column. Four one-tap questions, then a single result screen with live controls. */
 :root {
   --bg: #fafaf8;
@@ -2185,8 +2235,8 @@ __PLAN__
           <label class="price">₹ <input type="number" inputmode="numeric" min="0" max="2000" placeholder="price" value="${o.price ?? ""}" data-i="${i}" aria-label="What you pay for ${esc(o.r.name)}">${(o.frac || 1) < 1 ? ` <span>whole order · you count ₹${fmt((+o.price || 0) * o.frac)}</span>` : ""}</label></div>
         <button type="button" class="swap" data-out="${i}" aria-label="Remove ${esc(o.r.name)}">Remove</button></li>`).join("");
       // protein eaten so far today
-      let eaten = 0;
-      for (const [meal, list] of Object.entries(rows)) for (const r of list) if (ate.has(meal + ":" + r.it.food.id)) eaten += r.it.grams * r.share * r.it.food.p;
+      let eaten = 0, spentNow = 0;
+      for (const [meal, list] of Object.entries(rows)) for (const r of list) if (ate.has(meal + ":" + r.it.food.id)) { eaten += r.it.grams * r.share * r.it.food.p; spentNow += r.it.cost * r.share; }
       for (const m of ["Breakfast", "Lunch", "Dinner"]) if (ate.has(m + ":mess")) eaten += messMac(m, messIn(m)).p;
       // Logged plates vs the usual estimate the plan was made with: suggest a top-up from today's cheapest protein
       let plateGap = 0;
@@ -2199,7 +2249,8 @@ __PLAN__
         gapNote = `<p class="gap-note">Your mess food had about ${fmt(-plateGap)} g less protein than the plan expected.${best
           ? ` To make it up, add about <b>${qty({ food: best.food, grams: g }).replace("<small>", " ").replace("</small>", "")} ${esc(best.food.name)}</b> (≈₹${fmt(best.cost / best.grams * g)}).` : ""}</p>`;
       } else if (isToday && plateGap >= 4) gapNote = `<p class="gap-note good">Your mess food had about ${fmt(plateGap)} g more protein than the plan expected.</p>`;
-      outItems().forEach((o, i) => { if (ate.has("out:" + i)) eaten += o.r.p; });
+      outItems().forEach((o, i) => { if (ate.has("out:" + i)) { eaten += o.r.p; spentNow += (+o.price || 0) * (o.frac || 1); } });
+      const planCost = dp.totals.cost + outSum("price");
       // Daily log for the streak: what you ate today against your target
       const goal = targets().protein;
       if (isToday) {
@@ -2221,12 +2272,20 @@ __PLAN__
       const msg = eaten <= 0 ? (streak ? (logged(1) ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : `You missed yesterday. Tick something today to keep your <b>${streak}-day streak</b>.`) : "Tick a food when you eat it to start your streak.")
         : hit ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
       const showNudge = isToday && eaten > 0 && !standalone() && (installEvt || isIOS) && !ls("mbp_nudge_off");
-      const eatenCard = `<div class="eaten${hit ? " done" : ""}"><span>Eaten today</span><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
-          <b>${fmt(eaten)} <small>of ${goal} g protein</small></b><span>${Math.min(999, pct)}%</span>
-          <div class="bar"><i style="width:${Math.min(100, eaten / goal * 100)}%"></i></div>
-          <p class="e-msg">${msg}</p>
-          <div class="e-week" aria-label="Last 7 days">${week}</div></div>
-          ${cloud.enabled && !currentUser && isToday && !ls("mbp_save_off") ? `<div class="save-card"><p><b>Save your plan.</b> Right now it lives only in this browser. Sign in to keep it and use it on any phone.</p>
+      const ringC = 2 * Math.PI * 29, ringF = Math.min(1, eaten / goal);
+      // Bento tiles: protein, money, streak, coach message (one block, so .eaten still holds all of it)
+      const eatenCard = `<div class="eaten bento${hit ? " done" : ""}">
+          <div class="b-tile b-pro"><div class="b-col"><span class="b-k">Protein today</span>
+            <b>${fmt(eaten)} <small>g</small></b><span class="b-sub">of ${goal} g protein</span></div>
+            <div class="b-ring" role="img" aria-label="${Math.min(999, pct)}% of today's protein"><svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="29" class="b-tr"></circle>
+              <circle cx="36" cy="36" r="29" class="b-pg" stroke-dasharray="${(ringC * ringF).toFixed(1)} ${ringC.toFixed(1)}" transform="rotate(-90 36 36)"></circle></svg><span>${Math.min(999, pct)}%</span></div></div>
+          <div class="b-row">
+            <div class="b-tile b-cream"><span class="b-k">Spent so far</span><span class="b-big">${costEst ? "≈" : ""}₹${fmt(spentNow)}</span><span class="b-sub">of ${costEst ? "≈" : ""}₹${fmt(planCost)} today</span></div>
+            <div class="b-tile b-green"><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
+              <div class="e-week" aria-label="Last 7 days">${week}</div></div>
+          </div>
+          <div class="b-tile b-mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6l6 6-6 6M13 6l6 6-6 6"/></svg><p class="e-msg">${msg}</p></div></div>`;
+      const saveBits = `${cloud.enabled && !currentUser && isToday && !ls("mbp_save_off") ? `<div class="save-card"><p><b>Save your plan.</b> Right now it lives only in this browser. Sign in to keep it and use it on any phone.</p>
           <button type="button" class="ghost gbtn" id="saveGoogle">${G_LOGO}Continue with Google</button>
           <button type="button" class="w-link" id="saveEmail">or use email</button>
           <button type="button" class="x" id="saveX" aria-label="Hide this">×</button></div>` : ""}
@@ -2241,8 +2300,8 @@ __PLAN__
           if (nx) break;
         }
         if (nx) upNext = `<div class="upnext" role="region" aria-label="Up next"><div><span class="un-k">Up next · ${nx.meal}</span><b>${esc(nx.name)}</b>
-          <span class="un-m">≈${fmt(nx.p)} g protein · one tap to count it</span></div>
-          <div class="un-act"><button type="button" class="btn-sm" data-upnext="${nx.key}" aria-label="I ate ${esc(nx.name)}">I ate this</button><button type="button" class="link" id="upNo">Not yet</button></div></div>`;
+          <span class="un-m">+${fmt(nx.p)} g protein</span></div>
+          <div class="un-act"><button type="button" class="un-go" data-upnext="${nx.key}" aria-label="I ate ${esc(nx.name)}">Ate it</button><button type="button" class="link" id="upNo">Not yet</button></div></div>`;
       }
       const sec = (meal) => {
         const mess = messRow(meal, messIn(meal));
@@ -2269,7 +2328,7 @@ __PLAN__
         ${!isPro() ? `<p class="hint-sm">${S.variant ? "Today's plan, option " + (S.variant + 1) : "Today's cheapest plan"}. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
         ${isToday ? altBar : ""}
-        ${isToday ? eatenCard + upNext + gapNote : ""}
+        ${isToday ? eatenCard + upNext + saveBits + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
         ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
@@ -2311,7 +2370,7 @@ __PLAN__
         const before = eaten;
         save(); drawDay();
         const after = ((S.log || {})[today] || [0])[0];
-        if (before < goal && after >= goal) toast("Goal hit! 🎉 Come back tomorrow to keep your streak.");
+        if (before < goal && after >= goal) { toast("Goal hit! 🎉 Come back tomorrow to keep your streak."); celebrate(); }
       }));
       panel.querySelectorAll("[data-upnext]").forEach(b => b.addEventListener("click", () => { const t = panel.querySelector(`.tick-btn[data-ate="${b.dataset.upnext}"]`); if (t) t.click(); }));  // same path as ticking the row
       const un = $("#upNo"); if (un) un.addEventListener("click", () => { upNextOff = true; drawDay(); });
@@ -2623,6 +2682,59 @@ __PLAN__
   const toast = (msg) => { document.querySelectorAll(".toast").forEach(x => x.remove());
     const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = msg;
     document.body.appendChild(d); setTimeout(() => d.remove(), 5000); };
+  // Goal hit: a full-screen streak moment with a story-size picture to share
+  const streakNow = () => { const L = S.log || {}; const key = (n) => { const d = new Date(); d.setDate(d.getDate() - n); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+    const lg = (n) => ((L[key(n)] || [0])[0] > 0); let st = 0, miss = 0;
+    for (let n = lg(0) ? 0 : 1; n < 120; n++) { if (lg(n)) { st++; miss = 0; } else if (++miss > 1) break; } return st; };
+  function streakPicture(st, g, cost) {
+    const W = 1080, H = 1920, cv = document.createElement("canvas"); cv.width = W; cv.height = H; const x = cv.getContext("2d");
+    const F = getComputedStyle(document.body).fontFamily;
+    x.fillStyle = "#000"; x.fillRect(0, 0, W, H);
+    const tile = (tx, ty, tw, th, c) => { x.fillStyle = c; x.beginPath(); if (x.roundRect) x.roundRect(tx, ty, tw, th, 64); else x.rect(tx, ty, tw, th); x.fill(); };
+    tile(60, 120, 960, 1120, "#FF5A1F");
+    x.save(); x.translate(540, 300); x.scale(9, 9); x.translate(-12, -14);
+    x.fillStyle = "#000"; x.fill(new Path2D("M12 1c3 5 9 8 9 15a9 9 0 0 1-18 0c0-4 3-7 4-10 2 3 3 4 4 4 0-4-1-6 1-9z"));
+    x.fillStyle = "#F7C531"; x.fill(new Path2D("M12 12c1.5 2.5 4.5 4 4.5 7.5a4.5 4.5 0 0 1-9 0c0-2 1.5-3.5 2-5 1 1.5 1.5 2 2 2 0-2-.5-3 .5-4.5z")); x.restore();
+    x.fillStyle = "#000"; x.textAlign = "center"; x.font = `900 360px ${F}`; x.fillText(String(st), 540, 900);
+    x.font = `900 96px ${F}`; x.fillText("day streak!", 540, 1060);
+    tile(60, 1290, 465, 260, "#F4EEE6"); tile(555, 1290, 465, 260, "#BFE3DF");
+    x.fillStyle = "#000"; x.font = `900 104px ${F}`; x.fillText(`${Math.round(g)}g`, 292, 1420); x.fillText(`₹${Math.round(cost)}`, 787, 1420);
+    x.font = `600 40px ${F}`; x.fillText("protein today", 292, 1495); x.fillText("all it cost", 787, 1495);
+    tile(60, 1600, 960, 200, "#F7C531"); x.fillStyle = "#000"; x.font = `800 56px ${F}`; x.fillText("Make yours → macrava.com", 540, 1720);
+    x.textAlign = "left"; return cv;
+  }
+  function celebrate() {
+    document.querySelectorAll(".celebrate").forEach(x => x.remove());
+    const g = ((S.log || {})[localDay()] || [0])[0], st = Math.max(1, streakNow());
+    const cost = (() => { const el = document.querySelector(".b-cream .b-big"); return el ? +el.textContent.replace(/[^\d.]/g, "") || 0 : 0; })();
+    const d = document.createElement("div"); d.className = "celebrate"; d.setAttribute("role", "dialog"); d.setAttribute("aria-modal", "true"); d.setAttribute("aria-label", "Goal hit");
+    d.innerHTML = `<div class="cb-hero"><svg viewBox="0 0 24 28" aria-hidden="true"><path d="M12 1c3 5 9 8 9 15a9 9 0 0 1-18 0c0-4 3-7 4-10 2 3 3 4 4 4 0-4-1-6 1-9z" fill="#000"/><path d="M12 12c1.5 2.5 4.5 4 4.5 7.5a4.5 4.5 0 0 1-9 0c0-2 1.5-3.5 2-5 1 1.5 1.5 2 2 2 0-2-.5-3 .5-4.5z" fill="#F7C531"/></svg>
+        <b>${st}</b><span>day streak!</span></div>
+      <div class="cb-row"><div class="cb-t cb-cream"><b>${fmt(g)}g</b><span>protein today</span></div><div class="cb-t cb-mint"><b>₹${fmt(cost)}</b><span>all it cost</span></div></div>
+      <p class="cb-note">Goal hit. Come back tomorrow to make it ${st + 1}.</p>
+      <button type="button" class="cb-share">Share my streak</button>
+      <button type="button" class="cb-close">Continue</button>`;
+    document.body.appendChild(d);
+    const close = () => { d.remove(); document.removeEventListener("keydown", esc_); };
+    const esc_ = (e) => { if (e.key === "Escape") close(); };
+    document.addEventListener("keydown", esc_);
+    d.querySelector(".cb-close").addEventListener("click", close);
+    d.querySelector(".cb-share").addEventListener("click", async (e) => {
+      const b = e.currentTarget; b.disabled = true; track("share");
+      try {
+        const blob = await new Promise(res => streakPicture(st, g, cost).toBlob(res, "image/png"));
+        const file = new File([blob], "my-macrava-streak.png", { type: "image/png" });
+        const text = `${st}-day protein streak: ${fmt(g)} g today for ₹${fmt(cost)}. Make yours:`;
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], text, url: "https://macrava.com" }); } catch (err) { /* closed the share sheet */ }
+        } else {
+          const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "my-macrava-streak.png"; document.body.appendChild(a); a.click(); a.remove();
+          setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        }
+      } finally { b.disabled = false; }
+    });
+    d.querySelector(".cb-close").focus();
+  }
   async function sharePlan(btn, p, T, costEst) {
     btn.disabled = true; track("share");
     try {
