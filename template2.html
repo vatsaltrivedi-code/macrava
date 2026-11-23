@@ -30,6 +30,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap">
 <style>
+.hero.plan-strip { display: flex; flex-direction: column; align-items: stretch; text-align: left; gap: 8px; background: var(--surface); border: 1.5px solid var(--hair); border-radius: 22px; padding: 10px; }
+.plan-strip .ps-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.plan-strip .ps-k { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.plan-strip .hit-line { margin: 0; font-size: 12.5px; }
+.plan-strip .ps-main { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.plan-strip .cost { font-size: 30px; }
+.plan-strip .under-line { margin: 0; }
+.plan-strip .stats { margin: 0; flex-wrap: wrap; justify-content: flex-start; }
+.plan-strip .ps-main, .plan-strip .ps-top { justify-content: flex-start; }
+.plan-strip .ps-top { justify-content: space-between; }
+.plan-strip .q-line, .plan-strip .est-line { margin: 0; }
+.ps-chips { display: flex; align-items: stretch; gap: 8px; }
+.ps-chip { flex: 1; display: flex; flex-direction: column; gap: 0; background: var(--bg); border-radius: 14px; padding: 8px 10px; min-width: 0; }
+.ps-chip b { font-size: 20px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); line-height: 1.15; }
+.plan-strip .ps-chip .cost { font-size: 20px; }
+.ps-chip small { font-size: 12px; color: var(--muted); }
+.ps-chip.over b { color: var(--danger); }
+.ps-chip .hit-line { color: var(--accent); font-weight: 800; }
+.ps-share { flex: none; width: 48px; border-radius: 14px; border: 1.5px solid var(--accent); background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; cursor: pointer; }
+.ps-share svg { width: 20px; height: 20px; }
+.ps-share:disabled { opacity: .6; }
+.ps-more summary { font-size: 12.5px; color: var(--muted); cursor: pointer; list-style: none; padding: 2px 2px 0; }
+.ps-more summary::-webkit-details-marker { display: none; }
+.ps-more summary::after { content: " ▾"; }
+.ps-more[open] summary::after { content: " ▴"; }
+.ps-more p { margin: 6px 2px 0; font-size: 13px; color: var(--muted); }
+.ps-more .q-line, .ps-more .est-line { font-size: 13px; }
+.note .fix { margin-top: 10px; }
 /* Bento tiles on Today (fixed colours: same in light and dark) */
 .eaten.bento { display: flex; flex-direction: column; gap: 10px; align-items: stretch; background: none; border: 0; padding: 0; }
 .eaten.bento.done { background: none; }
@@ -2010,45 +2038,36 @@ __PLAN__
       <div class="r-side">
       <div class="today-head"><h1>Today · ${esc(dateTxt)}<span class="th-meta">${esc(metaTxt)}</span></h1>
         <button type="button" class="adjust-btn" id="adjustBtn" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Adjust</button></div>
-      <div class="hero">
-        <div class="ring" role="img" aria-label="${fmt(T.p)} of ${t.protein} grams protein">
-          <svg viewBox="0 0 132 132"><circle class="track" cx="66" cy="66" r="56"></circle>
-          <circle class="prog" cx="66" cy="66" r="56" stroke-dasharray="${C}" stroke-dashoffset="${C}"></circle></svg>
-          <div class="mid"><b>${fmt(T.p)}g</b><span>of ${t.protein}g</span></div>
+      <div class="hero plan-strip">
+        <div class="ps-chips">
+          <span class="ps-chip${left < -0.5 ? " over" : ""}"><b class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}</b><small>a day</small></span>
+          <span class="ps-chip"><b class="plan-p">${fmt(T.p)}g</b><small>protein${hitT ? ` <span class="hit-line">✓</span>` : ""}</small></span>
+          <span class="ps-chip"><b>${fmt(T.kcal)}</b><small>kcal</small></span>
+          <button type="button" class="ps-share" id="sharePlan" aria-label="Share my plan">${SHARE_IC}</button>
         </div>
-        <div>
-          ${hitT ? `<p class="hit-line">✓ Target reached</p>` : ""}
-          <h2>${S.name ? `${esc(S.name)}, this costs you` : "Costs you"}</h2>
-          <div class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}<small> / day</small></div>
-          <p class="under-line${left < -0.5 ? " over" : ""}">${left >= -0.5 ? `₹${fmt(Math.max(0, left))} under your ₹${S.budget} budget` : `₹${fmt(-left)} over your ₹${S.budget} budget`}</p>
-          <div class="stats"><span><b>${fmt(T.kcal)}</b> kcal</span><span><b>${fmt(T.c)}g</b> carbs</span><span><b>${fmt(T.f)}g</b> fat</span></div>
-          ${T.p > 0 && p.totals.hq != null ? `<p class="q-line" title="Complete protein your body uses well: milk, curd, paneer, eggs, soya, chicken, fish, whey"><b>${fmt(Math.min(100, Math.round(100 * p.totals.hq / T.p)))}%</b> from top-quality protein</p>` : ""}
-          ${costEst || macroEst ? `<p class="est-line">≈ Estimate: ${[costEst ? `prices are from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
-        </div>
+        <details class="ps-more"><summary>Plan details</summary>
+          <p class="under-line${left < -0.5 ? " over" : ""}">${left >= -0.5 ? `₹${fmt(Math.max(0, left))} under your ₹${S.budget} budget` : `₹${fmt(-left)} over your ₹${S.budget} budget`}${hitT ? ` · hits your ${t.protein} g target` : ""}</p>
+          <p class="ps-macro">${fmt(T.c)}g carbs · ${fmt(T.f)}g fat${T.p > 0 && p.totals.hq != null ? ` · <span class="q-line">${fmt(Math.min(100, Math.round(100 * p.totals.hq / T.p)))}% from top-quality protein</span>` : ""}</p>
+          ${costEst || macroEst ? `<p class="est-line">≈ ${[costEst ? `Prices from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
+        </details>
       </div>
-      <button type="button" class="share-btn small" id="sharePlan"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>Share my plan</button>
       ${p.styleRelaxed && !p.budgetShort ? (() => { const nm = p.styleRelaxed === "tasty" ? "Tasty" : "Balanced";
         const need = p.styleNeed != null ? Math.ceil((p.styleNeed + outSum("price")) / 10) * 10 : null;
-        return `<div class="note">${need ? `A ${nm} plan for ${t.protein} g protein costs about ₹${need} a day, more than your ₹${S.budget}.` : `A ${nm} plan can't reach these targets.`} So you're seeing the cheapest plan, which fits ₹${S.budget}.
+        return `<div class="note">${need ? `${nm} needs ₹${need} a day. Showing Cheapest.` : `${nm} can't reach this. Showing Cheapest.`}
           <div class="fix">
-            ${need && need <= 500 ? `<button type="button" class="btn-sm" id="fixStyleBudget" data-v="${need}">Raise budget to ₹${need} for ${nm}</button>` : ""}
-            <button type="button" class="btn-sm ghosty" id="keepBudget">Keep ₹${S.budget}, use Cheapest</button>
+            ${need && need <= 500 ? `<button type="button" class="btn-sm" id="fixStyleBudget" data-v="${need}">Use ₹${need}</button>` : ""}
+            <button type="button" class="btn-sm ghosty" id="keepBudget">Keep Cheapest</button>
           </div></div>`; })() : ""}
-            ${p.budgetShort ? `<div class="note short">
-          <b>${t.protein} g protein isn't possible on ₹${S.budget} a day.</b>
-          ${p.budgetSoft ? (t.carbs != null && t.fat != null && Math.abs(4 * t.protein + 4 * t.carbs + 9 * t.fat - t.kcal) > t.kcal * 0.07
-              ? `Your protein, carbs and fat also don't add up to ${fmt(t.kcal)} kcal (fix below). Closest plan for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`
-              : `₹${S.budget} can't cover ${fmt(t.kcal)} kcal${t.carbs != null || t.fat != null ? " with your carbs and fat" : ""} either. This is the most you can get for ₹${S.budget}: <b>${Math.round(T.p)} g protein, ${fmt(T.kcal)} kcal</b>, ${fmt(T.c)} g carbs, ${fmt(T.f)} g fat.`)
-            : `The most you can get for ₹${S.budget} is <b>${Math.round(T.p)} g protein</b> in ${fmt(T.kcal)} kcal (${fmt(T.c)} g carbs, ${fmt(T.f)} g fat). That's the plan below.`}
-          ${p.styleRelaxed ? `<br>${p.styleRelaxed === "tasty" ? "Tasty" : "Balanced"} would give you less protein on ₹${S.budget}, so you're seeing the plan with the most protein. Raise the budget to unlock it.` : ""}
+      ${p.budgetShort ? `<div class="note short">
+          ${p.budgetSoft ? `₹${S.budget} gets <b>${Math.round(T.p)} g</b> protein and ${fmt(T.kcal)} kcal, short of your targets.` : `₹${S.budget} gets <b>${Math.round(T.p)} g</b> protein, not ${t.protein} g.`}
           <div class="fix">
-            ${p.needCost != null ? `<button type="button" class="btn-sm" id="fixBudget" data-v="${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)}">Raise budget to ₹${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)} for ${t.protein} g</button>` : ""}
-            ${p.budgetSoft ? "" : `<button type="button" class="btn-sm ghosty" id="fixProtein" data-v="${Math.max(30, Math.floor(T.p / 5) * 5)}">Keep ₹${S.budget}: set protein to ${Math.max(30, Math.floor(T.p / 5) * 5)} g</button>`}
+            ${p.needCost != null ? `<button type="button" class="btn-sm" id="fixBudget" data-v="${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)}">₹${Math.min(500, Math.ceil((p.needCost + outSum("price")) / 10) * 10)} for ${t.protein} g</button>` : ""}
+            ${p.budgetSoft ? "" : `<button type="button" class="btn-sm ghosty" id="fixProtein" data-v="${Math.max(30, Math.floor(T.p / 5) * 5)}">Set ${Math.max(30, Math.floor(T.p / 5) * 5)} g</button>`}
           </div></div>` : ""}
       ${p.closest && t.carbs != null && t.fat != null && Math.abs(4 * t.protein + 4 * t.carbs + 9 * t.fat - t.kcal) > t.kcal * 0.07
-        ? `<div class="note">${t.protein} g protein, ${t.carbs} g carbs and ${t.fat} g fat add up to about ${fmt(4 * t.protein + 4 * t.carbs + 9 * t.fat)} kcal, not ${fmt(t.kcal)}. We kept your protein, carbs and fat as close as we could. Use the “Use … kcal” button under Carbs and fat to match, or set carbs and fat back to auto.</div>`
-        : p.closest ? `<div class="note">${t.protein} g protein in ${fmt(t.kcal)} kcal${t.carbs != null ? `, ${t.carbs} g carbs` : ""}${t.fat != null ? `, ${t.fat} g fat` : ""} isn't possible with the foods ${S.kitchen === false ? "you can make in your room" : "we have"}${p.overBudget ? " and this budget" : ""}. This is the closest plan: ${fmt(T.p)} g protein, ${fmt(T.kcal)} kcal. Try more calories or a little less protein.</div>`
-        : p.overBudget ? `<div class="note">₹${S.budget} isn't enough for ${t.protein} g protein and ${fmt(t.kcal)} kcal${outSum("price") ? " with what you're ordering" : ""}. This is the cheapest plan that hits your targets. Lower a target or raise the budget below.</div>` : ""}
+        ? `<div class="note">Your protein, carbs and fat don't add up to ${fmt(t.kcal)} kcal. Showing the closest plan.</div>`
+        : p.closest ? `<div class="note">Can't reach ${t.protein} g in ${fmt(t.kcal)} kcal${S.kitchen === false ? " without a kitchen" : ""}. Showing the closest plan.</div>`
+        : p.overBudget ? `<div class="note">Hitting your targets costs more than ₹${S.budget}. Lower a target or raise the budget.</div>` : ""}
 
       </div>
       <div class="r-main">
@@ -2147,7 +2166,6 @@ __PLAN__
       </div>
     </section>`;
 
-    requestAnimationFrame(() => { $(".prog").style.strokeDashoffset = C * (1 - frac); });
     $("#sharePlan").addEventListener("click", (e) => sharePlan(e.currentTarget, p, T, costEst));
 
     const panel = $("#panel");
@@ -2325,13 +2343,12 @@ __PLAN__
         wirePro(panel, drawDay); return;
       }
       panel.innerHTML = `${daysRow}
-        ${!isPro() ? `<p class="hint-sm">${S.variant ? "Today's plan, option " + (S.variant + 1) : "Today's cheapest plan"}. Planning the rest of the week is part of Pro.</p>` : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
+        ${!isPro() ? "" : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
         ${isToday ? altBar : ""}
         ${isToday ? eatenCard + upNext + saveBits + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
-        ${isToday ? `<p class="hint-sm">Tap the circle when you've eaten something. It resets every day.</p>` : ""}
         ${cut ? `<div class="undo"><span>${cut} food${cut > 1 ? "s" : ""} swapped out</span><button type="button" class="link" id="undo">Undo all</button></div>` : ""}`;
       panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
       wirePriceEdit(drawDay);
@@ -2679,6 +2696,7 @@ __PLAN__
     x.font = `600 38px ${F}`; x.globalAlpha = .85; x.fillText("Protein on any budget · Made in India", W / 2, 1830); x.globalAlpha = 1; x.textAlign = "left";
     return cv;
   }
+  const SHARE_IC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/></svg>';
   const toast = (msg) => { document.querySelectorAll(".toast").forEach(x => x.remove());
     const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = msg;
     document.body.appendChild(d); setTimeout(() => d.remove(), 5000); };

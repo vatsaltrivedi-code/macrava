@@ -20,7 +20,7 @@ async function open(b, store, pro) {
   try {
     { const store = makeStore(); const p = await open(b, store, false);
       ok(await vis(p, '#tBudget') && await vis(p, '.foods'), 'basic: today plan shows');
-      ok(/Today's cheapest plan\. Planning the rest of the week is part of Pro\./.test(await panelText(p)), 'basic: today hint');
+      ok(!!(await p.$('.dchip.locked')), 'basic: other days are locked for Pro');
       ok(await vis(p, '.swap[data-id]'), 'basic: Swap still available');
       ok(/Pro/.test(await p.$eval('[data-tab=shop]', e => e.innerText)), 'basic: Shopping tab has Pro badge');
       // another day -> Pro card, back to today -> meals

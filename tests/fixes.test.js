@@ -70,7 +70,7 @@ const row = (store) => store.rows.get(A.id);
       const p = await newDevice(b, store, { session: E }); await seed(p, PLAN({ updatedAt: 1 }), { mbp_owner: A.id }); await wait(1500);
       store.offline = true; await p.reload(); await wait(1500);
       ok(await budgetShown(p) === 200 && !(await p.$('#setup')), 'F5: email user offline lands on plan');
-      ok(/Asha, this costs you/.test(await p.evaluate(() => document.body.innerText)), 'F5: name remembered');
+      ok(await p.evaluate(() => JSON.parse(localStorage.getItem('mbp')).name) === 'Asha', 'F5: name remembered');
       await p.context().close(); }
 
     // F14. Device holding another account's plan: not uploaded to a new account

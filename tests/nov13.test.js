@@ -87,7 +87,7 @@ const names = (p) => p.$$eval('ul.foods li .fname .n', els => els.map(e => e.inn
       const bar = await p.$eval('.alt-bar', e => e.innerText);
       ok(/Plan option 2/.test(bar) && /option 1/.test(bar), 'option 2 shown with its price vs option 1 (' + bar.replace(/\n/g, ' ') + ')');
       ok((await names(p)).join('|') !== before, 'option 2 has different foods');
-      ok(/Target reached/.test(await p.$eval('.hero', e => e.innerText)), 'option 2 still hits the target');
+      ok(/hits your/.test(await p.$eval('.hero', e => e.textContent)), 'option 2 still hits the target');
       ok((await state(p)).variant === 1, 'option is saved');
       await p.reload(); await wait(500); if (await p.$('#guest')) { await p.click('#guest'); }
       await p.waitForSelector('.alt-bar', { timeout: 15000 });

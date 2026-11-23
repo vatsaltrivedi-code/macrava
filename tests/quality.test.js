@@ -47,7 +47,7 @@ const share = (p) => p.totals.hq / p.totals.p;
     const bfText = bf.split(/LUNCH|Lunch/)[0];
     ok(/bread|oats|muesli/i.test(bfText) && /egg|milk|curd|yogurt|dahi|lassi|cheese/i.test(bfText), 'app: breakfast has a base and a protein food');
     ok(!/sattu|namkeen|protein bar|bhujia|peanuts\b/i.test(bfText), 'app: no sattu, bars or namkeen at breakfast');
-    ok(/% from top-quality protein/.test(await p2.$eval('.hero', e => e.innerText)), 'app: shows the share of top-quality protein');
+    ok(/% from top-quality protein/.test(await p2.$eval('.hero', e => e.textContent)), 'app: shows the share of top-quality protein');
     ok(p2.errors.length === 0, 'app: no errors ' + p2.errors.join('|'));
     await p2.context().close();
   } finally { await b.close(); }
