@@ -58,6 +58,13 @@
 .ps-more p { margin: 6px 2px 0; font-size: 13px; color: var(--muted); }
 .ps-more .q-line, .ps-more .est-line { font-size: 13px; }
 .note .fix { margin-top: 10px; }
+.ps-chip.short b { color: var(--warn); }
+.ps-chip b small.of { font-size: 13px; font-weight: 700; color: var(--muted); }
+.ps-share { border-color: var(--hair) !important; background: var(--surface) !important; color: var(--ink) !important; }
+#planNotes { margin-top: 10px; }
+#planNotes .note { margin: 0; padding: 12px 14px; font-size: 14px; }
+#planNotes .note .fix { margin-top: 8px; }
+.more-ctl { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--hair); }
 /* Bento tiles on Today (fixed colours: same in light and dark) */
 .eaten.bento { display: flex; flex-direction: column; gap: 10px; align-items: stretch; background: none; border: 0; padding: 0; }
 .eaten.bento.done { background: none; }
@@ -2041,7 +2048,7 @@ __PLAN__
       <div class="hero plan-strip">
         <div class="ps-chips">
           <span class="ps-chip${left < -0.5 ? " over" : ""}"><b class="cost">${costEst ? "≈" : ""}₹${fmt(T.cost)}</b><small>a day</small></span>
-          <span class="ps-chip"><b class="plan-p">${fmt(T.p)}g</b><small>protein${hitT ? ` <span class="hit-line">✓</span>` : ""}</small></span>
+          <span class="ps-chip${hitT ? "" : " short"}"><b class="plan-p">${fmt(T.p)}${hitT ? "" : `<small class="of">/${t.protein}</small>`}g</b><small>protein${hitT ? ` <span class="hit-line">✓</span>` : ""}</small></span>
           <span class="ps-chip"><b>${fmt(T.kcal)}</b><small>kcal</small></span>
           <button type="button" class="ps-share" id="sharePlan" aria-label="Share my plan">${SHARE_IC}</button>
         </div>
@@ -2051,7 +2058,7 @@ __PLAN__
           ${costEst || macroEst ? `<p class="est-line">≈ ${[costEst ? `Prices from ${S.city === "Other" || !S.city ? "Gurugram" : "Gurugram, not " + esc(S.city)}` : "", S.meals ? "mess meals are a rough average" : "", !S.meals && macroEst ? "some macros are approximate" : ""].filter(Boolean).join("; ")}.</p>` : ""}
         </details>
       </div>
-      ${p.styleRelaxed && !p.budgetShort ? (() => { const nm = p.styleRelaxed === "tasty" ? "Tasty" : "Balanced";
+      <div id="planNotes">${p.styleRelaxed && !p.budgetShort ? (() => { const nm = p.styleRelaxed === "tasty" ? "Tasty" : "Balanced";
         const need = p.styleNeed != null ? Math.ceil((p.styleNeed + outSum("price")) / 10) * 10 : null;
         return `<div class="note">${need ? `${nm} needs ₹${need} a day. Showing Cheapest.` : `${nm} can't reach this. Showing Cheapest.`}
           <div class="fix">
@@ -2067,7 +2074,7 @@ __PLAN__
       ${p.closest && t.carbs != null && t.fat != null && Math.abs(4 * t.protein + 4 * t.carbs + 9 * t.fat - t.kcal) > t.kcal * 0.07
         ? `<div class="note">Your protein, carbs and fat don't add up to ${fmt(t.kcal)} kcal. Showing the closest plan.</div>`
         : p.closest ? `<div class="note">Can't reach ${t.protein} g in ${fmt(t.kcal)} kcal${S.kitchen === false ? " without a kitchen" : ""}. Showing the closest plan.</div>`
-        : p.overBudget ? `<div class="note">Hitting your targets costs more than ₹${S.budget}. Lower a target or raise the budget.</div>` : ""}
+        : p.overBudget ? `<div class="note">Hitting your targets costs more than ₹${S.budget}. Lower a target or raise the budget.</div>` : ""}</div>
 
       </div>
       <div class="r-main">
@@ -2169,6 +2176,7 @@ __PLAN__
     $("#sharePlan").addEventListener("click", (e) => sharePlan(e.currentTarget, p, T, costEst));
 
     const panel = $("#panel");
+    const planNotes = $("#planNotes");   // budget/style notes: shown on Today under the tiles, wired once below
     // Fix a pack price to what the shop shows (free on every plan): used in Today and Shopping
     const priceEditor = (f) => { const mp = myPrice(f); return `<li class="pedit"><div>
             <label>Price you see for 1 × ${esc(f.pack)}: ₹ <input id="pIn" type="number" inputmode="decimal" min="1" max="20000" value="${mp ? mp.p : f.price}"></label>
@@ -2287,7 +2295,7 @@ __PLAN__
       const week = [6, 5, 4, 3, 2, 1, 0].map(n => { const v = (S.log || {})[dayKey(n)], f = v && v[1] ? Math.min(1, v[0] / v[1]) : 0;
         const d = new Date(); d.setDate(d.getDate() - n);
         return `<div class="e-day${f >= 1 ? " hit" : ""}${n === 0 ? " today" : ""}" title="${v ? fmt(v[0]) + " of " + fmt(v[1]) + " g" : "Nothing ticked"}"><i style="--f:${f.toFixed(2)}"></i><span>${n === 0 ? "Today" : d.toLocaleDateString("en-IN", { weekday: "narrow" })}</span></div>`; }).join("");
-      const msg = eaten <= 0 ? (streak ? (logged(1) ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : `You missed yesterday. Tick something today to keep your <b>${streak}-day streak</b>.`) : "Tick a food when you eat it to start your streak.")
+      const msg = eaten <= 0 ? (streak ? (logged(1) ? `Tick what you eat today to keep your <b>${streak}-day streak</b>.` : `You missed yesterday. Tick something today to keep your <b>${streak}-day streak</b>.`) : "Tick what you eat to start your streak.")
         : hit ? "<b>Goal hit!</b> Come back tomorrow to keep your streak going." : `<b>${fmt(left)} g</b> to go. ${pct >= 50 ? "More than halfway there." : "Keep ticking as you eat."}`;
       const showNudge = isToday && eaten > 0 && !standalone() && (installEvt || isIOS) && !ls("mbp_nudge_off");
       const ringC = 2 * Math.PI * 29, ringF = Math.min(1, eaten / goal);
@@ -2298,12 +2306,12 @@ __PLAN__
             <div class="b-ring" role="img" aria-label="${Math.min(999, pct)}% of today's protein"><svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="29" class="b-tr"></circle>
               <circle cx="36" cy="36" r="29" class="b-pg" stroke-dasharray="${(ringC * ringF).toFixed(1)} ${ringC.toFixed(1)}" transform="rotate(-90 36 36)"></circle></svg><span>${Math.min(999, pct)}%</span></div></div>
           <div class="b-row">
-            <div class="b-tile b-cream"><span class="b-k">Spent so far</span><span class="b-big">${costEst ? "≈" : ""}₹${fmt(spentNow)}</span><span class="b-sub">of ${costEst ? "≈" : ""}₹${fmt(planCost)} today</span></div>
+            <div class="b-tile b-cream"><span class="b-k">Spent so far</span><span class="b-big">${costEst ? "≈" : ""}₹${fmt(spentNow)}</span><span class="b-sub">on food today</span></div>
             <div class="b-tile b-green"><span class="e-streak${streak ? "" : " off"}">${streak ? "🔥 " + streak + "-day streak" : "No streak yet"}</span>
               <div class="e-week" aria-label="Last 7 days">${week}</div></div>
           </div>
           <div class="b-tile b-mint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 6l6 6-6 6M13 6l6 6-6 6"/></svg><p class="e-msg">${msg}</p></div></div>`;
-      const saveBits = `${cloud.enabled && !currentUser && isToday && !ls("mbp_save_off") ? `<div class="save-card"><p><b>Save your plan.</b> Right now it lives only in this browser. Sign in to keep it and use it on any phone.</p>
+      const saveBits = `${cloud.enabled && !currentUser && isToday && !ls("mbp_save_off") ? `<div class="save-card"><p><b>Save your plan</b> and streak to use them on any phone.</p>
           <button type="button" class="ghost gbtn" id="saveGoogle">${G_LOGO}Continue with Google</button>
           <button type="button" class="w-link" id="saveEmail">or use email</button>
           <button type="button" class="x" id="saveX" aria-label="Hide this">×</button></div>` : ""}
@@ -2342,15 +2350,17 @@ __PLAN__
         panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
         wirePro(panel, drawDay); return;
       }
-      panel.innerHTML = `${daysRow}
-        ${!isPro() ? "" : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
+      panel.innerHTML = `${isToday ? "" : daysRow}
+        ${!isPro() || isToday ? "" : W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same. A bit more budget adds a second day.</p>`
           : `<p class="hint-sm">Two plans alternate through the week${isToday ? "" : ` · ${dayName(selDay)}: ${fmt(dp.totals.p)} g protein, ₹${fmt(dp.totals.cost + outSum("price"))}`}.</p>`}
-        ${isToday ? altBar : ""}
-        ${isToday ? eatenCard + upNext + saveBits + gapNote : ""}
+        ${isToday ? eatenCard + upNext + `<div id="notesSlot"></div>` + saveBits + gapNote : ""}
         ${["Breakfast", "Lunch", "Snacks", "Dinner"].map(sec).join("")}
         ${outs ? `<h3 class="meal">Ordered in</h3><ul class="foods">${outs}</ul>` : ""}
+        ${isToday ? `<div class="more-ctl">${daysRow}${isPro() && W.same ? `<p class="hint-sm">Your budget and targets leave room for one plan only, so every day is the same.</p>` : ""}${altBar}</div>` : ""}
         ${cut ? `<div class="undo"><span>${cut} food${cut > 1 ? "s" : ""} swapped out</span><button type="button" class="link" id="undo">Undo all</button></div>` : ""}`;
       panel.querySelectorAll("[data-day]").forEach(b => b.addEventListener("click", () => { selDay = +b.dataset.day; drawDay(); }));
+      const slot = panel.querySelector("#notesSlot");
+      if (planNotes) { if (slot && planNotes.children.length) slot.replaceWith(planNotes); else planNotes.remove(); }
       wirePriceEdit(drawDay);
       panel.querySelectorAll("[data-plate]").forEach(b => b.addEventListener("click", () => {
         const m = b.dataset.plate; if (plateEdit === m) { plateEdit = null; drawDay(); return; }

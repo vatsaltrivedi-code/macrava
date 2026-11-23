@@ -91,7 +91,7 @@ const names = (p) => p.$$eval('ul.foods li .fname .n', els => els.map(e => e.inn
       ok((await state(p)).variant === 1, 'option is saved');
       await p.reload(); await wait(500); if (await p.$('#guest')) { await p.click('#guest'); }
       await p.waitForSelector('.alt-bar', { timeout: 15000 });
-      ok(/Plan option 2/.test(await p.$eval('.alt-bar', e => e.innerText)), 'option survives a reload');
+      { const t2 = await p.$eval('.alt-bar', e => e.innerText); ok(/Plan option 2/.test(t2), 'option survives a reload (' + t2.replace(/\n/g,' ') + ')'); }
       await p.click('#altFirst'); await wait(1200);
       ok((await names(p)).join('|') === before, 'back to option 1 restores the first plan');
       ok(p.errors.length === 0, 'no page errors: ' + p.errors.join('; '));
